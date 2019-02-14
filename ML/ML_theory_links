@@ -22,10 +22,11 @@ https://medium.com/jatana/report-on-text-classification-using-cnn-rnn-han-f0e887
 Deep Learning for NLP: An Overview of Recent Trends:
 https://medium.com/dair-ai/deep-learning-for-nlp-an-overview-of-recent-trends-d0d8f40a776d
 
-Understanding LST and its quick implementation in Keras for sentiment analysis:
+Understanding LSTM and its quick implementation in Keras for sentiment analysis:
 https://towardsdatascience.com/understanding-lstm-and-its-quick-implementation-in-keras-for-sentiment-analysis-af410fd85b47 
 
 Bayesian framework for NLP:
 https://www.cs.york.ac.uk/aig/gmrg/Burcu_BayesianFrameworkforNLP.pdf
 
-
+Develop Your First Neural Network in Python With Keras Step-By-Step
+https://machinelearningmastery.com/tutorial-first-neural-network-python-keras/
