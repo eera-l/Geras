@@ -1,10 +1,11 @@
 import gensim
 import os
+from random import randint
 
 model = gensim.models.KeyedVectors.load_word2vec_format('/home/federica/Documents/Thesis/Datasets/GoogleNews-vectors-negative300.bin', binary=True)
-print(model.similarity('man', 'woman'))
+print(model.distance('man', 'woman'))
 
-path = '/home/federica/Documents/Thesis/Programs/TextParser/control_no_functional_clean/'
+path = '/home/federica/Documents/Thesis/Programs/TextParser/dementia_no_functional_clean/'
 pathControl = '/home/federica/Documents/Thesis/control_description'
 
 files = []
@@ -18,6 +19,10 @@ words = []
 lines = []
 
 distances = []
+total = []
+randoms = []
+
+randomDistances = []
 
 control = open(pathControl, "r")
 contentsControl = control.read()
@@ -30,11 +35,12 @@ for file in files:
     dataFile = contents.split("\n")
 
     for df in dataFile:
+        df = df.replace("_", " ")
         if not df:
             continue
         dataSpace = df.split(" ")
         for ds in dataSpace:
-            if not ds:
+            if not ds or ds == "of" or ds == "a":
                 continue
             words.append(ds)
 
@@ -42,11 +48,23 @@ for file in files:
         for ww in data:
             distances.append(model.similarity(w, ww))
 
-
+    words.clear()
     average = sum(distances) / len(distances)
     print(average)
-
     distances.clear()
+    total.append(average)
+
+for i in range(0, 50):
+    num = randint(0, len(total))
+    while num in randoms:
+        num = randint(0, len(total))
+    randoms.append(num)
+
+for i in range(0, 50):
+    randomDistances.append(total[randoms[i]])
+
+print("============================")
+print(sum(randomDistances) / len(randomDistances))
 
 
 
