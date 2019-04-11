@@ -5,8 +5,8 @@ from random import randint
 model = gensim.models.KeyedVectors.load_word2vec_format('/home/federica/Documents/Thesis/Datasets/GoogleNews-vectors-negative300.bin', binary=True)
 print(model.distance('man', 'woman'))
 
-path = '/home/federica/Documents/Thesis/Programs/TextParser/dementia_no_functional_clean/'
-pathControl = '/home/federica/Documents/Thesis/control_description'
+path = '/home/federica/Documents/Thesis/Programs/TextParser/dementia/dementia_no_functional_clean/'
+pathControl = '/home/federica/Documents/Thesis/control/control_description'
 
 files = []
 
@@ -49,22 +49,59 @@ for file in files:
             distances.append(model.similarity(w, ww))
 
     words.clear()
+    for i in range(0, 50):
+        num = randint(0, distances(total) - 1)
+        while num in randoms:
+            num = randint(0, distances(total) - 1)
+        randoms.append(num)
+
+    #for i in randoms:
+        #something
+
     average = sum(distances) / len(distances)
     print(average)
     distances.clear()
     total.append(average)
 
 for i in range(0, 50):
-    num = randint(0, len(total))
-    while num in randoms:
-        num = randint(0, len(total))
-    randoms.append(num)
-
-for i in range(0, 50):
     randomDistances.append(total[randoms[i]])
 
 print("============================")
 print(sum(randomDistances) / len(randomDistances))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
