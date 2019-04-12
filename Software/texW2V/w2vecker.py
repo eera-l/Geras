@@ -5,8 +5,9 @@ from gensim.models.word2vec import Word2Vec
 import gensim.downloader as api
 
 #model = gensim.models.KeyedVectors.load_word2vec_format('/home/federica/Documents/Thesis/Datasets/GoogleNews-vectors-negative300.bin', binary=True)
-top_directory = "/home/federica/Documents/Thesis/Programs/TextParser/corpus.txt"
+#top_directory = "/home/federica/Documents/Thesis/Programs/TextParser/corpus.txt"
 
+#Attempt to train Word2Vec on own corpus
 #corpus = api.load("/home/federica/Documents/Thesis/Programs/TextParser/corpus.txt")
 
 
@@ -33,6 +34,8 @@ top_directory = "/home/federica/Documents/Thesis/Programs/TextParser/corpus.txt"
 # for vector in corpus:  # convert each document to a bag-of-word vector
 #     print(vector)
 
+#Actually used Fasttext Wiki as pretrained dataset
+#instead of Google News
 model = api.load('fasttext-wiki-news-subwords-300')
 #model = Word2Vec(corpus)
 print(model.most_similar("cat"))
@@ -86,8 +89,6 @@ for file in files:
     words.clear()
 
 
-
-
     average = sum(distances) / len(distances)
     print(average)
     distances.clear()
@@ -97,15 +98,6 @@ for file, average in total.items():
     with open("/home/federica/Documents/Thesis/Programs/TextParser/dementia/dementia_w2v_distance/" + file,
                 "w") as singlefile:
         singlefile.write(str(average))
-
-# for i in range(0, 50):
-    #     num = randint(0, distances(total) - 1)
-    #     while num in randoms:
-    #         num = randint(0, distances(total) - 1)
-    #     randoms.append(num)
-
-# for i in range(0, 50):
-#     randomDistances.append(total[randoms[i]])
 
 print("============================")
 print(sum(total.values()) / len(total))
