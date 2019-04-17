@@ -1,15 +1,42 @@
 from sklearn.naive_bayes import GaussianNB
-
+from sklearn.naive_bayes import BernoulliNB
+from sklearn.utils import shuffle
 import numpy as np
+import pandas as pd
 
-x = np.array([[-3, 7], [1, 5], [1, 2], [-2, 0], [2, 3], [-4, 0], [-1, 1], [1, 1], [-2, 2], [2, 7], [-4, 1], [-2, 7]])
+#Read data
+df = pd.read_csv('train_set', sep=',')
 
-y = np.array(['Y', 'N', 'Y', 'Y', 'Y', 'N', 'Y', 'Y', 'N', 'N', 'Y', 'Y'])
+#Process data
+df = shuffle(df)
+y = df['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
+x = df.drop(columns=['dementia'])
 
-model = GaussianNB()
+#TODO split x and y into 80-20
+split_rate = 0.2
+split_index = int(split_rate * df.shape[0])
+x_val = x[:split_index]
+y_val = y[:split_index]
 
-model.fit(x, y)
+x_train = x[split_index:]
+y_train = y[split_index:]
 
-predicted = model.predict([[1, 2], [3, 4]])
 
-print(predicted)
+
+
+#valid = pd.read_csv('validation_set', sep=',')
+
+#training of the model
+model = BernoulliNB()
+model.fit(x_train, y_train)
+
+#evaluation
+score = model.score(x_train, y_train)
+
+#predicted = model.predict(valid)
+
+print(score)
+
+score = model.score(x_val, y_val)
+
+print(score)

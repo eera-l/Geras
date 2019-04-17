@@ -88,7 +88,6 @@ for file in files:
 
     words.clear()
 
-
     average = sum(distances) / len(distances)
     print(average)
     distances.clear()
