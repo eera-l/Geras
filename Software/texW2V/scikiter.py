@@ -40,11 +40,11 @@ score = model.score(x_val, y_val)
 
 print(score)
 #
-# fig = plt.figure()
-# ax = fig.add_subplot(111)
-# cax = plt.matshow(x.corr())
-# ax.set_xticklabels([''])
-# ax.set_yticklabels([''])
-#
-# fig.colorbar(cax)
-# plt.show()
+fig = plt.figure()
+ax = fig.add_subplot(111)
+cax = plt.matshow(x.corr())
+ax.set_xticklabels([''])
+ax.set_yticklabels([''])
+
+fig.colorbar(cax)
+plt.show()
