@@ -44,7 +44,7 @@ df = pd.DataFrame(np.array(rows), columns=['utterances', 'predicates', 'sentence
                                            'pauses_syllables',
                                            'pauses', 'trailing_offs', 'overlaps', 'repetitions', 'retracing_correction',
                                            'retracing_reform', 'type_token_ratio', 'adverbs_ratio',
-                                           'adjectives_ratio', 'idea_density', 'w2v_distance', 'dementia'])
+                                           'adjectives_ratio', 'idea_density', 'w2v_distance', 'age', 'dementia'])
 
 df.to_csv('train_set', index=False)
 
@@ -73,6 +73,6 @@ df = pd.DataFrame(np.array(rows), columns=['utterances', 'predicates', 'sentence
                                            'pauses_syllables',
                                            'pauses', 'trailing_offs', 'overlaps', 'repetitions', 'retracing_correction',
                                            'retracing_reform', 'type_token_ratio', 'adverbs_ratio',
-                                           'adjectives_ratio', 'idea_density', 'w2v_distance', 'dementia'])
+                                           'adjectives_ratio', 'idea_density', 'w2v_distance', 'age', 'dementia'])
 df.to_csv('test_set', index=False)
 
