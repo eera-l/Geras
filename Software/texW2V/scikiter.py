@@ -13,7 +13,7 @@ df = pd.read_csv('train_set', sep=',')
 #Process data
 df = shuffle(df)
 y = df['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
-x = df.drop(columns=['dementia', 'pauses', 'retracing_reform'])
+x = df.drop(columns=['dementia', 'pauses', 'retracing_reform', 'type_token_ratio'])
 
 
 split_rate = 0.2
@@ -34,18 +34,18 @@ y_train = y[split_index:]
 model = GaussianNB()
 model.fit(x_train, y_train)
 
-for i in range(0, 6):
-    df = shuffle(df)
-    y = df['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
-    x = df.drop(columns=['dementia', 'pauses', 'retracing_reform'])
-
-    x_train = x[split_index:]
-    y_train = y[split_index:]
-
-    x_val = x[:split_index]
-    y_val = y[:split_index]
-
-    model.fit(x_train, y_train)
+# for i in range(0, 6):
+#     df = shuffle(df)
+#     y = df['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
+#     x = df.drop(columns=['dementia', 'pauses', 'retracing_reform'])
+#
+#     x_train = x[split_index:]
+#     y_train = y[split_index:]
+#
+#     x_val = x[:split_index]
+#     y_val = y[:split_index]
+#
+#     model.fit(x_train, y_train)
 
 
 #evaluation
