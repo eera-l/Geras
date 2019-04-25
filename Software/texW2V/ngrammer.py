@@ -20,7 +20,8 @@ for r, d, f in os.walk(pathDementia):
         if '.cha' in file:
             filesD.append(os.path.join(r, file))
 
-for file in filesC:
+for i in range(0, 206):
+    file = filesC[i]
     file = open(file, 'r')
     lines = file.read()
     words = lines.split("\n")[:-1]
@@ -33,16 +34,20 @@ for file in filesC:
     for w in sm_words:
         frequencies.update({w : sm_words.count(w)})
 
+for k, v in frequencies.items():
+    frequencies[k] = v / len(sm_words)
+
 sorted_x = sorted(frequencies.items(), key=operator.itemgetter(1), reverse=True)
 
-f = open("frequencies_control.txt", "x")
+f = open("frequencies_control_train_p.txt", "x")
 for t in sorted_x:
     f.write(' '.join(str(s) for s in t) + '\n')
 
 frequencies.clear()
 sorted_x.clear()
 
-for file in filesD:
+for i in range(0, 263):
+    file = filesD[i]
     file = open(file, 'r')
     lines = file.read()
     words = lines.split("\n")[:-1]
@@ -55,8 +60,10 @@ for file in filesD:
     for w in sm_words:
         frequencies.update({w: sm_words.count(w)})
 
+for k, v in frequencies.items():
+    frequencies[k] = v / len(sm_words)
 sorted_x = sorted(frequencies.items(), key=operator.itemgetter(1), reverse=True)
 
-f = open("frequencies_dementia.txt", "x")
+f = open("frequencies_dementia_train_p.txt", "x")
 for t in sorted_x:
     f.write(' '.join(str(s) for s in t) + '\n')
