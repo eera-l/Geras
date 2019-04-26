@@ -1,46 +1,31 @@
 from keras import Sequential
 from keras.callbacks import EarlyStopping
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, LSTM
 import matplotlib.pyplot as plt
+import tensorflow as tf
+
+mnist = tf.keras.datasets.mnist
+
+(x_train, y_train), (x_test, y_test) = mnist.load_data()
+
+x_train = x_train / 255.0
+x_test = x_test / 255.0
+
+print(x_train[0].shape)
 
 #create model
 model = Sequential()
-model.add(Dense(24, input_dim=24, activation='relu'))
+model.add(LSTM(128, input_shape=(x_train.shape[1:]), activation='relu', return_sequences=True))
 model.add(Dropout(0.2))
-model.add(Dense(12, activation='relu'))
+model.add(LSTM(128, activation='relu'))
 model.add(Dropout(0.2))
-model.add(Dense(8, activation='relu'))
+model.add(Dense(32, activation='relu'))
 model.add(Dropout(0.2))
-model.add(Dense(1, activation='sigmoid'))
+
+model.add(Dense(10, activation='softmax'))
+
+opt = tf.keras.optimizers.Adam(lr=1e-3, decay=1e-5)
 # Compile model
-model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+model.compile(loss='sparse_categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
 # Fit the model
-
-es = EarlyStopping(monitor='val_loss', patience=40)
-history = model.fit(x_train, y_train, validation_split=0.2, epochs=1000, batch_size=10,  callbacks=[es])
-
-
-# evaluate the model
-scores = model.evaluate(x_train, y_train)
-print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
-print(history.history['val_acc'][-1])
-# scores = model.evaluate(x_val, y_val)
-# print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
-
-print(history.history.keys())
-# summarize history for accuracy
-plt.plot(history.history['acc'])
-plt.plot(history.history['val_acc'])
-plt.title('model accuracy')
-plt.ylabel('accuracy')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.show()
-# summarize history for loss
-plt.plot(history.history['loss'])
-plt.plot(history.history['val_loss'])
-plt.title('model loss')
-plt.ylabel('loss')
-plt.xlabel('epoch')
-plt.legend(['train', 'test'], loc='upper left')
-plt.show()
+history = model.fit(x_train, y_train, epochs=3, validation_data=(x_test, y_test))
