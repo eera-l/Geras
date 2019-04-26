@@ -14,10 +14,14 @@ def split_dataframe():
     #Process data
     global df, x, y
     df = shuffle(df)
+    # take only dementia column (which are the labels, Y for dementia and N for control)
+    # and convert to numbers: 1 for Y and 0 for N
     y = df['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
-    x = df.drop(columns=['dementia', 'pauses', 'retracing_reform', 'type_token_ratio'])
+    # drop columns with empty values (pauses and retracing_reform)
+    x = df.drop(columns=['dementia', 'pauses', 'retracing_reform'])
 
 
+# Perform kfold cross validation to avoid overfitting
 def do_kfold_validation():
     kfold = KFold(n_splits=10, random_state=42, shuffle=True)
     global model
