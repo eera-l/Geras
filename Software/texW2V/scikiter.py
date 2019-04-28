@@ -37,8 +37,8 @@ def split_dataframe():
 # Perform kfold cross validation to avoid overfitting
 def do_kfold_validation():
     # initializes kfold with 10 folds, including shuffling,
-    # using 42 as seed for the shuffling
-    kfold = KFold(n_splits=10, random_state=42, shuffle=True)
+    # using 50 as seed for the shuffling
+    kfold = KFold(n_splits=10, random_state=50, shuffle=True)
 
     global model, x_train, x_val, y_train, y_val
 
@@ -101,4 +101,4 @@ read_csv()
 split_dataframe()
 do_kfold_validation()
 evaluate_accuracy()
-plot_correlation()
+# plot_correlation()
