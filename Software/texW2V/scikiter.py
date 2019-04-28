@@ -18,20 +18,20 @@ import pandas as pd
 def read_csv():
     global df
 
-    # read data and stores it into dataframe
+    # reads data and stores it into dataframe
     df = pd.read_csv('train_set', sep=',')
 
 
 def split_dataframe():
-    # Process data
+
     global df, x, y
 
-    # take only dementia column (which are the labels, Y for dementia and N for control)
-    # and convert to numbers: 1 for Y and 0 for N
+    # takes only dementia column (which are the labels, Y for dementia and N for control)
+    # and converts to numbers: 1 for Y and 0 for N
     y = df['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
 
-    # drop columns with empty values (pauses and retracing_reform)
-    # and drop dementia column because it is not needed
+    # drops columns with empty values (pauses and retracing_reform)
+    # and drops dementia column because it is not needed
     x = df.drop(columns=['dementia', 'pauses', 'retracing_reform'])
 
 
@@ -76,8 +76,8 @@ def evaluate_accuracy():
 
 def evaluate_sen_spec(y_true, y_pred, set):
     # gets number of true negatives (tn), false positives (fp),
-    # false negatives (fn) and true positives (tp) by
-    # matching the predicted labels against the correct ones
+    # false negatives (fn) and true positives (tp)
+    # by matching the predicted labels against the correct ones
     tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
 
     specificity = tn / (tn + fp)
