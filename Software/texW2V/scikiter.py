@@ -23,7 +23,6 @@ def read_csv():
 
 
 def split_dataframe():
-
     global df, x, y
 
     # takes only dementia column (which are the labels, Y for dementia and N for control)
