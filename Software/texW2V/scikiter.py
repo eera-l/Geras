@@ -1,12 +1,14 @@
-# scikiter.py
-# author: Federica Comuni
-# Implements a Bayesian Network with Gaussian Naive Bayes classifier
-# reads raw data from train_set.csv and converts it to a dataframe
-# then splits the dataset into validation and train set
-# performs 10-fold cross validation
-# trains the model on the train set and evaluates the classification accuracy on train set and validation set
-# evaluates sensitivity and specificity on both datasets
-# plots a graph of the correlation between features
+"""
+scikiter.py
+author: Federica Comuni
+Implements a Bayesian Network with Gaussian Naive Bayes classifier
+reads raw data from train_set.csv and converts it to a dataframe
+then splits the dataset into validation and train set
+performs 10-fold cross validation
+trains the model on the train set and evaluates the classification accuracy on train set and validation set
+evaluates sensitivity and specificity on both datasets
+plots a graph of the correlation between features
+"""
 
 from sklearn.naive_bayes import GaussianNB
 from sklearn.model_selection import KFold
@@ -15,11 +17,22 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
+"""
+Reads data from .csv file
+"""
+
+
 def read_csv():
     global df
 
     # reads data and stores it into dataframe
     df = pd.read_csv('train_set', sep=',')
+
+
+"""
+Splits dataframe into x (containing the data)
+and y (containing the respective labels)
+"""
 
 
 def split_dataframe():
@@ -34,11 +47,15 @@ def split_dataframe():
     x = df.drop(columns=['dementia', 'pauses', 'retracing_reform'])
 
 
-# Perform kfold cross validation to avoid overfitting
+"""
+Perform kfold cross validation to avoid overfitting
+"""
+
+
 def do_kfold_validation():
     # initializes kfold with 10 folds, including shuffling,
-    # using 50 as seed for the shuffling
-    kfold = KFold(n_splits=10, random_state=50, shuffle=True)
+    # using 7 as seed for the shuffling
+    kfold = KFold(n_splits=5, random_state=7, shuffle=True)
 
     global model, x_train, x_val, y_train, y_val
 
@@ -51,6 +68,11 @@ def do_kfold_validation():
         y_train, y_val = y.loc[train_index], y.loc[val_index]
         # training of the model
         model.fit(x_train, y_train)
+
+"""
+Evaluates accuracy on train set
+and validation set
+"""
 
 
 def evaluate_accuracy():
@@ -73,6 +95,12 @@ def evaluate_accuracy():
     evaluate_sen_spec(y_val, y_pred, 'validation')
 
 
+"""
+Evaluates sensitivity and specificity
+on given dataset
+"""
+
+
 def evaluate_sen_spec(y_true, y_pred, set):
     # gets number of true negatives (tn), false positives (fp),
     # false negatives (fn) and true positives (tp)
@@ -85,7 +113,11 @@ def evaluate_sen_spec(y_true, y_pred, set):
     print("{0:<35s} {1:6.3f}%".format('Sensitivity on ' + set + ' set:', sensitivity))
 
 
-# plots graph of correlation between features using matplotlib
+"""
+plots graph of correlation between features using matplotlib
+"""
+
+
 def plot_correlation():
     labels = x.columns.values
     fig = plt.figure(num='Features correlation')

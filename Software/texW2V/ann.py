@@ -13,7 +13,7 @@ def read_data():
 
 
 def split_dataframe():
-    global df, x, y
+    global df, x, y, x_train, y_train
 
     # takes only dementia column (which are the labels, Y for dementia and N for control)
     # and converts to numbers: 1 for Y and 0 for N
@@ -22,28 +22,21 @@ def split_dataframe():
     # drops columns with empty values (pauses and retracing_reform)
     # and drops dementia column because it is not needed
     x = df.drop(columns=['dementia', 'pauses', 'retracing_reform'])
-
-
-# Perform kfold cross validation to avoid overfitting
-def do_kfold_validation():
-    global x_train, y_train, x_val, y_val
-    numpy.random.seed(7)
-    split_rate = 0.2
-    split_index = int(split_rate * df.shape[0])
-    # x_val = x[:split_index]
-    # y_val = y[:split_index]
-    #
-    # x_train = x[split_index:]
-    # y_train = y[split_index:]
     x_train = x
     y_train = y
 
+# Perform kfold cross validation to avoid overfitting
+def do_kfold_validation():
+    global x_train, y_train, split_rate
+    numpy.random.seed(7)
+    split_rate = 0.2
+
 
 def normalize():
-    global x_train, x_val
+    global x_train
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
-    # x_val = scaler.transform(x_val)
+
 
 def train_model():
     global model, history
@@ -60,39 +53,33 @@ def train_model():
     model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
     # Fit the model
 
-    es = EarlyStopping(monitor='val_loss', patience=20)
-    history = model.fit(x_train, y_train, validation_split=0.2, epochs=50, callbacks=[es])
+    es = EarlyStopping(monitor='val_acc', patience=14)
+    history = model.fit(x_train, y_train, validation_split=split_rate, epochs=100, callbacks=[es])
+    print(history.history['val_acc'])
 
 
 def evaluate_model():
     # evaluate the model
-    loss, acc = model.evaluate(x_train, y_train)
-    print(loss, acc)
-    # print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
-    # print(history.history['val_acc'][-1])
-    # loss, acc = model.evaluate(x_val, y_val)
-    # print(loss, acc)
-    # print(history.history['val_acc'][-1])
-    # print(scores)
-    # print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+    scores = model.evaluate(x_train, y_train)
+    print("\n%s: %.2f%%" % (model.metrics_names[1], scores[1]*100))
+    print(history.history['val_acc'][-1])
 
-    # print(history.history.keys())
     # summarize history for accuracy
-    # plt.plot(history.history['acc'])
-    # plt.plot(history.history['val_acc'])
-    # plt.title('model accuracy')
-    # plt.ylabel('accuracy')
-    # plt.xlabel('epoch')
-    # plt.legend(['train', 'test'], loc='upper left')
-    # plt.show()
-    # # summarize history for loss
-    # plt.plot(history.history['loss'])
-    # plt.plot(history.history['val_loss'])
-    # plt.title('model loss')
-    # plt.ylabel('loss')
-    # plt.xlabel('epoch')
-    # plt.legend(['train', 'test'], loc='upper left')
-    # plt.show()
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
+    plt.title('model accuracy')
+    plt.ylabel('accuracy')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
+    # summarize history for loss
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.show()
 
 
 read_data()
