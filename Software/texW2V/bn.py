@@ -1,10 +1,10 @@
 """
-scikiter.py
+bn.py
 author: Federica Comuni
 Implements a Bayesian Network with Gaussian Naive Bayes classifier
 reads raw data from train_set.csv and converts it to a dataframe
 then splits the dataset into validation and train set
-performs 10-fold cross validation
+performs 5-fold cross validation
 trains the model on the train set and evaluates the classification accuracy on train set and validation set
 evaluates sensitivity and specificity on both datasets
 plots a graph of the correlation between features
@@ -53,7 +53,7 @@ Perform kfold cross validation to avoid overfitting
 
 
 def do_kfold_validation():
-    # initializes kfold with 10 folds, including shuffling,
+    # initializes kfold with 5 folds, including shuffling,
     # using 7 as seed for the shuffling
     kfold = KFold(n_splits=5, random_state=7, shuffle=True)
 
@@ -68,6 +68,7 @@ def do_kfold_validation():
         y_train, y_val = y.loc[train_index], y.loc[val_index]
         # training of the model
         model.fit(x_train, y_train)
+
 
 """
 Evaluates accuracy on train set
@@ -133,4 +134,4 @@ read_csv()
 split_dataframe()
 do_kfold_validation()
 evaluate_accuracy()
-# plot_correlation()
+plot_correlation()
