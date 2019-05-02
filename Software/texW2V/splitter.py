@@ -9,6 +9,7 @@ pathDementia = '/home/federica/Documents/Thesis/Programs/TextParser/dementia/dem
 filesC = []
 filesD = []
 rows = []
+split_rate = 0.8
 
 for r, d, f in os.walk(pathControl):
     for file in f:
@@ -20,8 +21,7 @@ for r, d, f in os.walk(pathDementia):
         if '.cha' in file:
             filesD.append(os.path.join(r, file))
 
-#206 control texts
-for i in range(0, 206):
+for i in range(int(split_rate * len(filesC))):
     file = filesC[i]
     file = open(file, "r")
     lines = file.read()
@@ -29,8 +29,8 @@ for i in range(0, 206):
     words.append('N')
     rows.append(words)
 
-#263 dementia texts
-for i in range(0, 263):
+
+for i in range(int(split_rate * len(filesD))):
     file = filesD[i]
     file = open(file, "r")
     lines = file.read()
@@ -50,8 +50,10 @@ df.to_csv('train_set', index=False)
 
 
 rows.clear()
+start_index_control = int(split_rate * len(filesC))
+start_index_dementia = int(split_rate * len(filesD))
 
-for i in range(206, len(filesC)):
+for i in range(start_index_control, len(filesC)):
     file = filesC[i]
     file = open(file, "r")
     lines = file.read()
@@ -59,7 +61,7 @@ for i in range(206, len(filesC)):
     words.append('N')
     rows.append(words)
 
-for i in range(263, len(filesD)):
+for i in range(start_index_dementia, len(filesD)):
     file = filesD[i]
     file = open(file, "r")
     lines = file.read()
