@@ -18,10 +18,17 @@ def read_directory(files, path):
                 files.append(os.path.join(r, file))
 
 
-def read_files(files, start_range, end_range, control):
+def read_files(files, control, train):
     global lines, rows_control, rows_dementia
     lines = []
-    for i in range(start_range, end_range):
+    split_rate = 0.8
+    if train:
+        start_index = 0
+        end_index = int(split_rate * len(files))
+    else:
+        start_index = int(split_rate * len(files))
+        end_index = len(files)
+    for i in range(start_index, end_index):
         file = files[i]
         file = open(file, "r")
         lines = file.read()
@@ -55,10 +62,10 @@ def write_to_file(title):
 
 read_directory(filesC, pathControl)
 read_directory(filesD, pathDementia)
-read_files(filesC, 0, 206, True)
-read_files(filesD, 0, 263, False)
+read_files(filesC, True, True)
+read_files(filesD, False, True)
 write_to_file('train_set_lstm')
-read_files(filesC, 206, len(filesC), True)
-read_files(filesD, 263, len(filesD), False)
+read_files(filesC, True, False)
+read_files(filesD, False, False)
 write_to_file('test_set_lstm')
 

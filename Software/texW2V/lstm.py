@@ -1,11 +1,16 @@
+import re
+
 import pandas as pd
 import numpy as np
-from keras_preprocessing.text import Tokenizer
+from keras import Input, Model
+from keras_preprocessing.text import Tokenizer, text_to_word_sequence, one_hot
 from keras_preprocessing.sequence import pad_sequences
+import keras
 from sklearn.model_selection import KFold
 from keras.models import Sequential
-from keras.layers import Dense, Embedding, LSTM
+from keras.layers import Dense, Embedding, LSTM, Flatten
 from keras.layers.embeddings import Embedding
+from load_glove_embeddings import load_glove_embeddings
 
 """
 Reads data from .csv file
@@ -35,7 +40,30 @@ def split_dataframe():
     # drops columns with empty values (pauses and retracing_reform)
     # and drops dementia column because it is not needed
     x = df.drop(columns=['dementia'])
-    x = x.iloc[1:]
+    embed(x, df, y)
+
+
+def embed(x, df, y):
+    word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=50)
+
+    out_matrix = []
+
+    for text in x['text'].tolist():
+        indices = []
+        for w in text_to_word_sequence(text):
+            indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
+
+        out_matrix.append(indices)
+
+    encoded_texts = out_matrix
+
+    max_len = 50
+    padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
+    # print(padded_texts)
+    df['text'] = padded_texts
+    x = df.drop(columns=['dementia'])
+    do_kfold_validation(x, y, embedding_matrix)
+
 
 
 """
@@ -43,7 +71,7 @@ Perform kfold cross validation to avoid overfitting
 """
 
 
-def do_kfold_validation():
+def do_kfold_validation(x, y, embedding_matrix):
     # initializes kfold with 5 folds, including shuffling,
     # using 7 as seed for the shuffling
     kfold = KFold(n_splits=5, random_state=7, shuffle=True)
@@ -55,35 +83,31 @@ def do_kfold_validation():
         x_train, x_val = x.loc[train_index], x.loc[val_index]
         y_train, y_val = y.loc[train_index], y.loc[val_index]
 
-
-def tokenize():
-    global x_train, x_val, vocabulary_size, max_length, x_train_pad, x_val_pad, x_train_tokens, x_val_tokens
-    tokenizer = Tokenizer()
-    total_texts = x_train + x_val
-    tokenizer.fit_on_texts(total_texts)
-
-    max_length = max([len(s.split()) for s in total_texts])
-
-    vocabulary_size = len(tokenizer.word_index) + 1
-
-    x_train_tokens = tokenizer.texts_to_sequences(x_train)
-    x_val_tokens = tokenizer.texts_to_sequences(x_val)
-
-    x_train_pad = pad_sequences(x_train_tokens, maxlen=max_length, padding='post')
-    x_val_pad = pad_sequences(x_val_tokens, maxlen=max_length, padding='post')
+    train_model(x_train, y_train, embedding_matrix, 50)
 
 
-def train_model():
-    global vocabulary_size, max_length, x_train_pad, y_train, x_val_pad, y_val, x_train_token, x_val_tokens
-    model = Sequential()
-    model.add(Embedding(vocabulary_size, 100, input_length=max_length))
-    model.add(LSTM(units=32, dropout=0.2, recurrent_dropout=0.2))
-    model.add(Dense(1, activation='sigmoid'))
+def train_model(x_train, y_train, embedding_matrix, maxlen):
+    global x
+    embedding_layer = Embedding(input_dim=embedding_matrix.shape[0],
+                                output_dim=embedding_matrix.shape[1],
+                                input_length=maxlen,
+                                weights=[embedding_matrix],
+                                trainable=False,
+                                name='embedding_layer')
 
-    model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+    i = Input(shape=(maxlen,), dtype='int32', name='main_input')
+    x = embedding_layer(i)
+    x = Flatten()(x)
+    x_train = x
+    o = Dense(1, activation='sigmoid')(x)
 
-    history = model.fit(x_train_tokens, y_train, batch_size=128, epochs=50, validation_data=(x_val_tokens, y_val), verbose=2)
-    evaluate_model(model, history)
+    model = Model(inputs=i, outputs=o)
+
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])  # Compile the model
+    print(model.summary())  # Summarize the model
+    model.fit(x_train, y_train, epochs=50, verbose=0)  # Fit the model
+    loss, accuracy = model.evaluate(x_train, y_train, verbose=0)  # Evaluate the model
+    print('Accuracy: %0.3f' % accuracy)
 
 
 """
@@ -100,6 +124,4 @@ def evaluate_model(model, history):
 
 read_csv()
 split_dataframe()
-do_kfold_validation()
-tokenize()
-train_model()
+# do_kfold_validation()
