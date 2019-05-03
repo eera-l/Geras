@@ -56,10 +56,12 @@ def embed(x, df, y):
 
     encoded_texts = out_matrix
 
-    max_len = 50
+    max_len = 70
     padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
     # print(padded_texts)
-    df['text'] = padded_texts
+    for idx, el in enumerate(padded_texts):
+        df['text'][idx] = el
+    # df['text'] = padded_texts
     x = df.drop(columns=['dementia'])
     do_kfold_validation(x, y, embedding_matrix, padded_texts)
 
@@ -81,10 +83,10 @@ def do_kfold_validation(x, y, embedding_matrix, padded_texts):
         x_train, x_val = x.loc[train_index], x.loc[val_index]
         y_train, y_val = y.loc[train_index], y.loc[val_index]
 
-    train_model(x_train, y_train, embedding_matrix, 50, padded_texts)
+    train_model(x_train, y_train, embedding_matrix, 70, x_val, y_val)
 
 
-def train_model(x_train, y_train, embedding_matrix, maxlen, padded_texts):
+def train_model(x_train, y_train, embedding_matrix, maxlen, x_val, y_val):
 
     # embedding_layer = Embedding(input_dim=embedding_matrix.shape[0],
     #                             output_dim=embedding_matrix.shape[1],
@@ -110,9 +112,11 @@ def train_model(x_train, y_train, embedding_matrix, maxlen, padded_texts):
 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])  # Compile the model
     print(model.summary())  # Summarize the model
-    model.fit(padded_texts, y_train, batch_size=147, epochs=50, verbose=0)  # Fit the model
-    loss, accuracy = model.evaluate(padded_texts, y_train, verbose=0)  # Evaluate the model
-    print('Accuracy: %0.3f' % accuracy)
+    model.fit(x_train, y_train, batch_size=1, epochs=50, verbose=0)  # Fit the model
+    loss, accuracy = model.evaluate(x_train, y_train, verbose=0)  # Evaluate the model
+    print('Train set accuracy: %0.3f' % accuracy)
+    loss, accuracy = model.evaluate(x_val, y_val, verbose=0)
+    print('Validation set accuracy: %0.3f' % accuracy)
 
 
 """
