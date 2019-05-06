@@ -129,6 +129,7 @@ def train_model(x_train, y_train, embedding_matrix, maxlen, x_val, y_val, padded
 
     # x_train.pop(0)
 
+
     x_df = x_train.values
     y_df = x_val.values
 
@@ -148,14 +149,14 @@ def train_model(x_train, y_train, embedding_matrix, maxlen, x_val, y_val, padded
     model.add(LSTM(128, return_sequences=True, dropout=0.2))
     model.add(LSTM(128, dropout=0.2))
     model.add(Dense(128, activation='relu'))
-    model.add(Dropout(0.2))
+    model.add(Dropout(0.3))
     model.add(Dense(64, activation='relu'))
     model.add(Dropout(0.2))
 
     model.add(Dense(32, activation='relu'))
-    model.add(Dropout(0.2))
+    # model.add(Dropout(0.2))
     model.add(Dense(16, activation='relu'))
-    model.add(Dropout(0.2))
+    # model.add(Dropout(0.2))
     model.add(Dense(1, activation='sigmoid'))
 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])  # Compile the model
