@@ -43,7 +43,7 @@ def split_dataframe(df):
 
 
 def embed(x, df, y):
-    word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=50)
+    word2index, embedding_matrix = load_glove_embeddings('C:\\Users\\EerAmore\\Documents\\HKR\\Thesis\\wiki-news-300d-1M.vec', embedding_dim=50)
 
     out_matrix = []
 
@@ -58,11 +58,17 @@ def embed(x, df, y):
 
     max_len = 70
     padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
-    # print(padded_texts)
+    # for idx, el in enumerate(padded_texts):
+    #     a = np.array(el)
+    #     a = np.reshape(a, (70, 1))
+    #     padded_texts[idx] = a
     for idx, el in enumerate(padded_texts):
         df['text'][idx] = el
-    # df['text'] = padded_texts
-    x = df.drop(columns=['dementia'])
+    # for idx, el in enumerate(df['text']):
+    #     if df['text'][idx] != 'text':
+    #         a = df['text'][idx]
+    #         a = np.reshape(a, (70, 1))
+    #         x[idx] = a
     do_kfold_validation(x, y, embedding_matrix, padded_texts)
 
 
@@ -77,28 +83,32 @@ def do_kfold_validation(x, y, embedding_matrix, padded_texts):
     # using 7 as seed for the shuffling
     kfold = KFold(n_splits=5, random_state=7, shuffle=True)
 
-    # x_train, y_train = []
     # splits datasets into folds and trains the model
-    for train_index, val_index in kfold.split(x):
-        x_train, x_val = x.loc[train_index], x.loc[val_index]
+    for train_index, val_index in kfold.split(df['text']):
+        x_train, x_val = df['text'].loc[train_index], df['text'].loc[val_index]
         y_train, y_val = y.loc[train_index], y.loc[val_index]
 
-    train_model(x_train, y_train, embedding_matrix, 70, x_val, y_val)
+    train_model(x_train, y_train, embedding_matrix, 70, x_val, y_val, padded_texts, y)
 
 
-def train_model(x_train, y_train, embedding_matrix, maxlen, x_val, y_val):
+def train_model(x_train, y_train, embedding_matrix, maxlen, x_val, y_val, padded_texts, y):
 
-    # embedding_layer = Embedding(input_dim=embedding_matrix.shape[0],
-    #                             output_dim=embedding_matrix.shape[1],
-    #                             input_length=maxlen,
-    #                             weights=[embedding_matrix],
-    #                             trainable=False,
-    #                             name='embedding_layer')
+    # for idx, el in enumerate(x_train):
+    #     if el == 'text':
+    #         x_train.pop(0)
+    #     a = el
+    #     a = np.reshape(a, (70, 1))
+    #     x_train[idx] = a
 
-    # i = Input(shape=(maxlen,), dtype='int32', name='main_input')
-    # x = embedding_layer(i)
-    # x = Flatten()(x)
-    # # x_train = x
+    # x_train.pop(0)
+
+    x_df = []
+
+    for i in range(len(x_train)):
+        for num in x_train.iloc[[i]]:
+            x_df.append(num)
+
+
     model = Sequential()
     model.add(Embedding(input_dim=embedding_matrix.shape[0],
                                 output_dim=embedding_matrix.shape[1],
@@ -112,11 +122,12 @@ def train_model(x_train, y_train, embedding_matrix, maxlen, x_val, y_val):
 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])  # Compile the model
     print(model.summary())  # Summarize the model
-    model.fit(x_train, y_train, batch_size=1, epochs=50, verbose=0)  # Fit the model
-    loss, accuracy = model.evaluate(x_train, y_train, verbose=0)  # Evaluate the model
+    model.fit(x_df, y_train, batch_size=1, epochs=50, verbose=0)  # Fit the model
+    # model.fit(padded_texts, y, batch_size=1, epochs=50, verbose=0)  # Fit the model
+    loss, accuracy = model.evaluate(x_df, y_train, verbose=0)  # Evaluate the model
     print('Train set accuracy: %0.3f' % accuracy)
-    loss, accuracy = model.evaluate(x_val, y_val, verbose=0)
-    print('Validation set accuracy: %0.3f' % accuracy)
+    # loss, accuracy = model.evaluate(x_val, y_val, verbose=0)
+    # print('Validation set accuracy: %0.3f' % accuracy)
 
 
 """
