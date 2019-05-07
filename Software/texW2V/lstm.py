@@ -9,7 +9,7 @@ from keras_preprocessing.sequence import pad_sequences
 import keras
 from sklearn.model_selection import KFold
 from keras.models import Sequential
-from keras.layers import Dense, Embedding, LSTM, Flatten, Dropout
+from keras.layers import Dense, Embedding, LSTM, Flatten, Dropout, Bidirectional
 from keras.layers.embeddings import Embedding
 from load_glove_embeddings import load_glove_embeddings
 import pickle
@@ -59,19 +59,19 @@ def embed(x, df, y):
     #
     # encoded_texts = out_matrix
     #
-    # max_len = 70
+    # max_len = 50
     # padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
     #
     # # for idx, el in enumerate(padded_texts):
     # #     a = np.array(el)
     # #     a = np.reshape(a, (70, 1))
     # #     padded_texts[idx] = a
-
+    #
     # # for idx, el in enumerate(df['text']):
     # #     if df['text'][idx] != 'text':
     # #         a = df['text'][idx]
     # #         a = np.reshape(a, (70, 1))
-    #         x[idx] = a
+    # #        x[idx] = a
     # store_data(padded_texts, 'embedded_text')
     padded_texts = load_data('embedded_text')
     # store_data(embedding_matrix, 'embedded_matrix')
@@ -115,7 +115,7 @@ def do_kfold_validation(x, y, embedding_matrix, padded_texts):
     #     x_train, x_val = padded_texts[train_index:], padded_texts[:val_index]
     #     y_train, y_val = y.loc[train_index], y.loc[val_index]
 
-    train_model(x_train, y_train, embedding_matrix, 70, x_val, y_val, padded_texts, y)
+    train_model(x_train, y_train, embedding_matrix, 50, x_val, y_val, padded_texts, y)
 
 
 def train_model(x_train, y_train, embedding_matrix, maxlen, x_val, y_val, padded_texts, y):
@@ -146,8 +146,8 @@ def train_model(x_train, y_train, embedding_matrix, maxlen, x_val, y_val, padded
                                 weights=[embedding_matrix],
                                 trainable=False,
                                 name='embedding_layer'))
-    model.add(LSTM(128, return_sequences=True, dropout=0.2))
-    model.add(LSTM(128, dropout=0.2))
+    model.add(Bidirectional(LSTM(128, return_sequences=True, dropout=0.2)))
+    model.add(Bidirectional(LSTM(128, dropout=0.2)))
     model.add(Dense(128, activation='relu'))
     model.add(Dropout(0.3))
     model.add(Dense(64, activation='relu'))
