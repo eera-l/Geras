@@ -17,6 +17,7 @@ from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 """
@@ -25,8 +26,10 @@ Reads data and stores it into dataframe df
 
 
 def read_data():
-    global df
+    global df, df_test
     df = pd.read_csv('train_set', sep=',')
+    df_test = pd.read_csv('test_set', sep=',')
+    np.random.seed(21)
 
 
 
@@ -37,7 +40,7 @@ and y, containing corresponding label (healthy or dementia)
 
 
 def split_dataframe():
-    global df, x, y, x_train, y_train
+    global df, df_test, x, y, x_test, y_test
 
     # takes only dementia column (which are the labels, Y for dementia and N for control)
     # and converts to numbers: 1 for Y and 0 for N
@@ -46,6 +49,10 @@ def split_dataframe():
     # drops columns with empty values (pauses and retracing_reform)
     # and drops dementia column because it is not needed
     x = df.drop(columns=['dementia', 'pauses', 'retracing_reform'])
+
+    y_test = df_test['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
+
+    x_test = df_test.drop(columns=['dementia', 'pauses', 'retracing_reform'])
 
 
 """
@@ -75,10 +82,11 @@ have mean = 0 and standard deviation = 1
 
 
 def normalize():
-    global x_train, x_val
+    global x_train, x_val, x_test
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_val = scaler.fit_transform(x_val)
+    x_test = scaler.fit_transform(x_test)
 
 
 """
@@ -116,6 +124,9 @@ def train_model():
     y_pred = model.predict(x_val)
     y_pred = transform_predictions(y_pred)
     evaluate_sen_spec(y_val, y_pred, 'validation')
+    y_pred = model.predict(x_test)
+    y_pred = transform_predictions(y_pred)
+    evaluate_sen_spec(y_test, y_pred, 'test')
 
 
 """
@@ -161,6 +172,9 @@ def evaluate_model():
     scores = model.evaluate(x_train, y_train)
     print("{0:<35s} {1:6.3f}%".format('Accuracy on train set:', scores[1] * 100))
     print("{0:<35s} {1:6.3f}%".format('Accuracy on validation set:', float(history.history['val_acc'][-1]) * 100))
+
+    scores = model.evaluate(x_test, y_test)
+    print("{0:<35s} {1:6.3f}%".format('Accuracy on test set:', scores[1] * 100))
 
 
 """

@@ -23,10 +23,11 @@ Reads data from .csv file
 
 
 def read_csv():
-    global df
+    global df, df_test
 
     # reads data and stores it into dataframe
     df = pd.read_csv('train_set', sep=',')
+    df_test = pd.read_csv('test_set', sep=',')
 
 
 """
@@ -36,7 +37,7 @@ and y (containing the respective labels)
 
 
 def split_dataframe():
-    global df, x, y
+    global df, x, y, x_test, y_test
 
     # takes only dementia column (which are the labels, Y for dementia and N for control)
     # and converts to numbers: 1 for Y and 0 for N
@@ -45,6 +46,10 @@ def split_dataframe():
     # drops columns with empty values (pauses and retracing_reform)
     # and drops dementia column because it is not needed
     x = df.drop(columns=['dementia', 'pauses', 'retracing_reform'])
+
+    y_test = df_test['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
+
+    x_test = df_test.drop(columns=['dementia', 'pauses', 'retracing_reform'])
 
 
 """
@@ -85,6 +90,10 @@ def evaluate_accuracy():
     score = model.score(x_val, y_val)
     print("{0:<35s} {1:6.3f}%".format('Accuracy on validation set:', score * 100))
 
+    # evaluation on test set
+    score = model.score(x_test, y_test)
+    print("{0:<35s} {1:6.3f}%".format('Accuracy on test set:', score * 100))
+
     # stores predicted labels for the train set
     # in an array
     y_pred = model.predict(x_train)
@@ -94,6 +103,11 @@ def evaluate_accuracy():
     # in an array
     y_pred = model.predict(x_val)
     evaluate_sen_spec(y_val, y_pred, 'validation')
+
+    # stores predicted labels for the test set
+    # in an array
+    y_pred = model.predict(x_test)
+    evaluate_sen_spec(y_test, y_pred, 'test')
 
 
 """
