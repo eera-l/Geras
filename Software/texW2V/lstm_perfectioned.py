@@ -26,8 +26,8 @@ Reads data from .csv file
 def read_csv():
 
     # reads data and stores it into dataframe
-    df = pd.read_csv('train_set_lstm', sep=',')
-    df_2 = pd.read_csv('train_set', sep=',')
+    df = pd.read_csv('train_set_lstm_90', sep=',')
+    df_2 = pd.read_csv('train_set_90', sep=',')
     dataframes = [df, df_2]
     return dataframes
 
@@ -52,37 +52,38 @@ def split_dataframe(dataframes):
 
 
 def embed(x_lstm, df, y, x_fe):
-    max_len = 70
-    # word2index, embedding_matrix = load_glove_embeddings('/home/federica/Documents/Thesis/Geras/Software/texW2V/wiki-news-300d-1M.vec', embedding_dim=50)
-    #
-    # out_matrix = []
-    #
-    # for text in x_lstm['text'].tolist():
-    #     indices = []
-    #     for w in text_to_word_sequence(text):
-    #         indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
-    #
-    #     out_matrix.append(indices)
-    #
-    # encoded_texts = out_matrix
-    #
-    #
-    # padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
-    #
-    # # for idx, el in enumerate(padded_texts):
-    # #     a = np.array(el)
-    # #     a = np.reshape(a, (70, 1))
-    # #     padded_texts[idx] = a
-    #
-    # # for idx, el in enumerate(df['text']):
-    # #     if df['text'][idx] != 'text':
-    # #         a = df['text'][idx]
-    # #         a = np.reshape(a, (70, 1))
-    # #        x_lstm[idx] = a
-    # store_data(padded_texts, 'embedded_text')
-    padded_texts = load_data('embedded_text')
-    # store_data(embedding_matrix, 'embedded_matrix')
-    embedding_matrix = load_data('embedded_matrix')
+    max_len = 197
+    word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
+
+    out_matrix = []
+
+    for text in x_lstm['text'].tolist():
+        indices = []
+        for w in text_to_word_sequence(text):
+            indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
+        if len(indices) > max_len:
+            max_len = len(indices)
+        out_matrix.append(indices)
+
+    encoded_texts = out_matrix
+    print(max_len)
+
+    padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
+
+    # for idx, el in enumerate(padded_texts):
+    #     a = np.array(el)
+    #     a = np.reshape(a, (70, 1))
+    #     padded_texts[idx] = a
+
+    # for idx, el in enumerate(df['text']):
+    #     if df['text'][idx] != 'text':
+    #         a = df['text'][idx]
+    #         a = np.reshape(a, (70, 1))
+    #        x_lstm[idx] = a
+    store_data(padded_texts, 'embedded_text_90')
+    padded_texts = load_data('embedded_text_90')
+    store_data(embedding_matrix, 'embedded_matrix_90')
+    embedding_matrix = load_data('embedded_matrix_90')
     for idx, el in enumerate(padded_texts):
         dataframes[0]['text'][idx] = el
     do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len)
@@ -114,9 +115,9 @@ Perform kfold cross validation to avoid overfitting
 
 
 def do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len):
-    # initializes kfold with 5 folds, including shuffling,
+    # initializes kfold with 10 folds, including shuffling,
     # using 7 as seed for the shuffling
-    kfold = KFold(n_splits=5, random_state=7, shuffle=True)
+    kfold = KFold(n_splits=10, random_state=7, shuffle=True)
 
     # splits datasets into folds and trains the model
     for train_index, val_index in kfold.split(dataframes[0]['text']):
