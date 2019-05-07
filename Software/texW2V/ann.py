@@ -64,6 +64,8 @@ def do_kfold_validation():
     for train_index, val_index in kfold.split(x):
         x_train, x_val = x.loc[train_index], x.loc[val_index]
         y_train, y_val = y.loc[train_index], y.loc[val_index]
+        normalize()
+        train_model()
 
 
 """
@@ -189,7 +191,7 @@ def plot_history():
 read_data()
 split_dataframe()
 do_kfold_validation()
-normalize()
-train_model()
+# normalize()
+# train_model()
 plot_history()
 
