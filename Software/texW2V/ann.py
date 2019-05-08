@@ -63,7 +63,7 @@ Perform kfold cross validation to avoid overfitting
 def do_kfold_validation():
     # initializes kfold with 5 folds, including shuffling,
     # using 9 as seed for the shuffling
-    kfold = KFold(n_splits=5, random_state=9, shuffle=True)
+    kfold = KFold(n_splits=5, random_state=21, shuffle=True)
 
     global x_train, x_val, y_train, y_val
 
@@ -207,5 +207,5 @@ split_dataframe()
 do_kfold_validation()
 # normalize()
 # train_model()
-plot_history()
+# plot_history()
 
