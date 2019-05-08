@@ -23,11 +23,12 @@ Reads data from .csv file
 
 
 def read_csv():
-    global df, df_test
 
     # reads data and stores it into dataframe
     df = pd.read_csv('train_set', sep=',')
     df_test = pd.read_csv('test_set', sep=',')
+    split_dataframe(df, df_test)
+
 
 
 """
@@ -36,8 +37,7 @@ and y (containing the respective labels)
 """
 
 
-def split_dataframe():
-    global df, x, y, x_test, y_test
+def split_dataframe(df, df_test):
 
     # takes only dementia column (which are the labels, Y for dementia and N for control)
     # and converts to numbers: 1 for Y and 0 for N
@@ -51,18 +51,18 @@ def split_dataframe():
 
     x_test = df_test.drop(columns=['dementia', 'pauses', 'retracing_reform'])
 
+    do_kfold_validation(x, y, x_test, y_test)
+
 
 """
 Perform kfold cross validation to avoid overfitting
 """
 
 
-def do_kfold_validation():
+def do_kfold_validation(x, y, x_test, y_test):
     # initializes kfold with 5 folds, including shuffling,
     # using 9 as seed for the shuffling
     kfold = KFold(n_splits=5, random_state=9, shuffle=True)
-
-    global model, x_train, x_val, y_train, y_val
 
     # uses a Gaussian Naive Bayes classifier
     model = GaussianNB()
@@ -74,6 +74,9 @@ def do_kfold_validation():
         # training of the model
         model.fit(x_train, y_train)
 
+    evaluate_accuracy(model, x_train, x_val, x_test, y_train, y_val, y_test)
+    # plot_correlation(x)
+
 
 """
 Evaluates accuracy on train set
@@ -81,7 +84,7 @@ and validation set
 """
 
 
-def evaluate_accuracy():
+def evaluate_accuracy(model, x_train, x_val, x_test, y_train, y_val, y_test):
     # evaluation on train set
     score = model.score(x_train, y_train)
     print("{0:<35s} {1:6.3f}%".format('Accuracy on train set:', score * 100))
@@ -133,7 +136,7 @@ plots graph of correlation between features using matplotlib
 """
 
 
-def plot_correlation():
+def plot_correlation(x):
     labels = x.columns.values
     fig = plt.figure(num='Features correlation')
     ax = fig.add_subplot(111)
@@ -145,7 +148,3 @@ def plot_correlation():
 
 
 read_csv()
-split_dataframe()
-do_kfold_validation()
-evaluate_accuracy()
-plot_correlation()
