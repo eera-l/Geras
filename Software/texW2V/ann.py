@@ -26,10 +26,10 @@ Reads data and stores it into dataframe df
 
 
 def read_data():
-    global df, df_test
     df = pd.read_csv('train_set', sep=',')
     df_test = pd.read_csv('test_set', sep=',')
     np.random.seed(21)
+    split_dataframe(df, df_test)
 
 
 
@@ -39,8 +39,7 @@ and y, containing corresponding label (healthy or dementia)
 """
 
 
-def split_dataframe():
-    global df, df_test, x, y, x_test, y_test
+def split_dataframe(df, df_test):
 
     # takes only dementia column (which are the labels, Y for dementia and N for control)
     # and converts to numbers: 1 for Y and 0 for N
@@ -53,6 +52,7 @@ def split_dataframe():
     y_test = df_test['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
 
     x_test = df_test.drop(columns=['dementia', 'pauses', 'retracing_reform'])
+    do_kfold_validation(x, y, x_test, y_test)
 
 
 """
@@ -60,19 +60,16 @@ Perform kfold cross validation to avoid overfitting
 """
 
 
-def do_kfold_validation():
+def do_kfold_validation(x, y, x_test, y_test):
     # initializes kfold with 5 folds, including shuffling,
     # using 9 as seed for the shuffling
-    kfold = KFold(n_splits=5, random_state=21, shuffle=True)
-
-    global x_train, x_val, y_train, y_val
+    kfold = KFold(n_splits=5, random_state=9, shuffle=True)
 
     # splits datasets into folds and trains the model
     for train_index, val_index in kfold.split(x):
         x_train, x_val = x.loc[train_index], x.loc[val_index]
         y_train, y_val = y.loc[train_index], y.loc[val_index]
-        normalize()
-        train_model()
+        normalize(x_train, y_train, x_val, y_val, x_test, y_test)
 
 
 """
@@ -81,12 +78,12 @@ have mean = 0 and standard deviation = 1
 """
 
 
-def normalize():
-    global x_train, x_val, x_test
+def normalize(x_train, y_train, x_val, y_val, x_test, y_test):
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_val = scaler.fit_transform(x_val)
     x_test = scaler.fit_transform(x_test)
+    train_model(x_train, y_train, x_val, y_val, x_test, y_test)
 
 
 """
@@ -94,8 +91,7 @@ Creates a 4-layer neural network and trains it
 """
 
 
-def train_model():
-    global model, history
+def train_model(x_train, y_train, x_val, y_val, x_test, y_test):
     # create model
     model = Sequential()
     # input layer: 22 neurons just like the number of features
@@ -117,7 +113,7 @@ def train_model():
     # when the chosen value (validation set accuracy) reaches its peak and starts decreasing
     es = EarlyStopping(monitor='val_acc', patience=14)
     history = model.fit(x_train, y_train, epochs=100, callbacks=[es], validation_data=(x_val, y_val))
-    evaluate_model()
+    evaluate_model(model, history, x_train, y_train, x_test, y_test)
     y_pred = model.predict(x_train)
     y_pred = transform_predictions(y_pred)
     evaluate_sen_spec(y_train, y_pred, 'train')
@@ -127,6 +123,7 @@ def train_model():
     y_pred = model.predict(x_test)
     y_pred = transform_predictions(y_pred)
     evaluate_sen_spec(y_test, y_pred, 'test')
+    # plot_history(history)
 
 
 """
@@ -167,7 +164,7 @@ Evaluates accuracy of the model
 """
 
 
-def evaluate_model():
+def evaluate_model(model, history, x_train, y_train, x_test, y_test):
     # evaluate the model
     scores = model.evaluate(x_train, y_train)
     print("{0:<35s} {1:6.3f}%".format('Accuracy on train set:', scores[1] * 100))
@@ -182,7 +179,7 @@ Plots history of accuracy and loss during epochs
 """
 
 
-def plot_history():
+def plot_history(history):
 
     # summarize history for accuracy
     plt.plot(history.history['acc'])
@@ -203,9 +200,4 @@ def plot_history():
 
 
 read_data()
-split_dataframe()
-do_kfold_validation()
-# normalize()
-# train_model()
-# plot_history()
 

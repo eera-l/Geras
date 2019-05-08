@@ -7,6 +7,7 @@ from keras.callbacks import EarlyStopping
 from keras_preprocessing.text import Tokenizer, text_to_word_sequence, one_hot
 from keras_preprocessing.sequence import pad_sequences
 import keras
+from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import KFold
 from keras.models import Sequential
 from keras.layers import Dense, Embedding, LSTM, Flatten, Dropout, Bidirectional, Concatenate, concatenate, \
@@ -26,9 +27,12 @@ Reads data from .csv file
 def read_csv():
 
     # reads data and stores it into dataframe
-    df = pd.read_csv('train_set_lstm_90', sep=',')
-    df_2 = pd.read_csv('train_set_90', sep=',')
-    dataframes = [df, df_2]
+    df = pd.read_csv('train_set_lstm', sep=',')
+    df_2 = pd.read_csv('train_set', sep=',')
+    df_test = pd.read_csv('test_set', sep=',')
+    df_test_lstm = pd.read_csv('test_set_lstm', sep=',')
+    dataframes = [df, df_2, df_test, df_test_lstm]
+    np.random.seed(21)
     return dataframes
 
 
@@ -48,45 +52,66 @@ def split_dataframe(dataframes):
     # and drops dementia column because it is not needed
     x_lstm = dataframes[0].drop(columns=['dementia'])
     x_fe = dataframes[1].drop(columns=['dementia'])
-    embed(x_lstm, dataframes, y, x_fe)
+
+    x_test = dataframes[2].drop(columns=['dementia'])
+    y_test = dataframes[2]['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
+
+    x_test_lstm = dataframes[3].drop(columns=['dementia'])
+
+    embed(x_lstm, dataframes, y, x_fe, x_test, x_test_lstm, y_test)
 
 
-def embed(x_lstm, df, y, x_fe):
+def embed(x_lstm, df, y, x_fe, x_test, x_test_lstm, y_test):
     max_len = 197
-    word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
+    # word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
+    #
+    # out_matrix = []
+    #
+    # for text in x_lstm['text'].tolist():
+    #     indices = []
+    #     for w in text_to_word_sequence(text):
+    #         indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
+    #     if len(indices) > max_len:
+    #         max_len = len(indices)
+    #     out_matrix.append(indices)
+    #
+    # encoded_texts = out_matrix
+    # print(max_len)
+    #
+    # padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
 
-    out_matrix = []
+    # word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
+    #
+    # out_matrix = []
+    #
+    # for text in x_test_lstm['text'].tolist():
+    #     indices = []
+    #     for w in text_to_word_sequence(text):
+    #         if w == 'scotfree':
+    #             continue
+    #         indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
+    #     if len(indices) > max_len:
+    #         max_len = len(indices)
+    #     out_matrix.append(indices)
+    #
+    # encoded_texts = out_matrix
+    #
+    # padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
+    # store_data(padded_texts, 'embedded_text_test')
+    # embedding_matrix_test = load_data('embedded_text_test')
 
-    for text in x_lstm['text'].tolist():
-        indices = []
-        for w in text_to_word_sequence(text):
-            indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
-        if len(indices) > max_len:
-            max_len = len(indices)
-        out_matrix.append(indices)
-
-    encoded_texts = out_matrix
-    print(max_len)
-
-    padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
-
-    # for idx, el in enumerate(padded_texts):
-    #     a = np.array(el)
-    #     a = np.reshape(a, (70, 1))
-    #     padded_texts[idx] = a
-
-    # for idx, el in enumerate(df['text']):
-    #     if df['text'][idx] != 'text':
-    #         a = df['text'][idx]
-    #         a = np.reshape(a, (70, 1))
-    #        x_lstm[idx] = a
-    store_data(padded_texts, 'embedded_text_90')
-    padded_texts = load_data('embedded_text_90')
-    store_data(embedding_matrix, 'embedded_matrix_90')
-    embedding_matrix = load_data('embedded_matrix_90')
+    # store_data(padded_texts, 'embedded_text')
+    padded_texts = load_data('embedded_text')
+    # store_data(embedding_matrix, 'embedded_matrix')
+    embedding_matrix = load_data('embedded_matrix')
+    embedding_matrix_test = load_data('embedded_text_test')
     for idx, el in enumerate(padded_texts):
         dataframes[0]['text'][idx] = el
-    do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len)
+
+    for idx, el in enumerate(embedding_matrix_test):
+        dataframes[3]['text'][idx] = el
+    x_test_lstm = dataframes[3]['text']
+    do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len, x_test, x_test_lstm, y_test)
 
 
 def store_data(padded_texts, file_name):
@@ -103,37 +128,35 @@ def load_data(file_name):
     pickle_file.close()
     return padded_texts
 
-
-def normalize(x):
-    scaler = StandardScaler()
-    x = scaler.fit_transform(x)
-    return x
-
 """
 Perform kfold cross validation to avoid overfitting
 """
 
 
-def do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len):
-    # initializes kfold with 10 folds, including shuffling,
+def do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len, x_test, x_test_lstm, y_test):
+    # initializes kfold with 5 folds, including shuffling,
     # using 7 as seed for the shuffling
-    kfold = KFold(n_splits=10, random_state=7, shuffle=True)
+    kfold = KFold(n_splits=5, random_state=9, shuffle=True)
+    scaler = StandardScaler()
+
 
     # splits datasets into folds and trains the model
     for train_index, val_index in kfold.split(dataframes[0]['text']):
         x_train_lstm, x_val_train = dataframes[0]['text'].loc[train_index], dataframes[0]['text'].loc[val_index]
         y_train, y_val = y.loc[train_index], y.loc[val_index]
-
-    for train_index, val_index in kfold.split(x_fe):
         x_train_features, x_val_features = x_fe.loc[train_index], x_fe.loc[val_index]
 
-    x_train_features = normalize(x_train_features)
-    x_val_features = normalize(x_val_features)
+    x_train_features = scaler.fit_transform(x_train_features)
+    x_val_features = scaler.transform(x_val_features)
+    x_test = scaler.fit_transform(x_test)
 
-    train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val_train, y_val, padded_texts, y, x_train_features, x_val_features)
+
+    train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val_train, y_val, padded_texts, y, x_train_features, x_val_features,
+                x_test, x_test_lstm, y_test)
 
 
-def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, padded_texts, y, x_t_f, x_v_f):
+def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, padded_texts, y, x_t_f, x_v_f,
+                x_test, x_test_lstm, y_test):
 
     # for idx, el in enumerate(x_train):
     #     if el == 'text':
@@ -147,6 +170,7 @@ def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, 
 
     x_df = x_train_lstm.values
     y_df = x_val.values
+    x_df_test = x_test_lstm.values
 
     # a = np.zeros([353, 70])
     a = np.vstack(x_df)
@@ -154,52 +178,57 @@ def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, 
     # b = np.zeros([88, 70])
     b = np.vstack(y_df)
 
+    c = np.vstack(x_df_test)
+
     fe_model = feature_layer()
     lstm = lstm_model(embedding_matrix, max_len)
     merged_layers = concatenate([fe_model.output, lstm.output])
     # model.add(Concatenate([fe_model, lstm]))
     # model.add(Dense(1,activation='sigmoid'))
 
-    x = Dense(84, activation='relu')(merged_layers)
+    x = Dense(84, activation='tanh')(merged_layers)
     x = Dropout(0.5)(x)
-    x = Dense(64, activation='relu')(x)
-    x = Dropout(0.3)(x)
+    x = Dense(64, activation='tanh')(x)
+    x = Dropout(0.4)(x)
     x = BatchNormalization()(x)
-    x = Dense(64, activation='relu')(x)
+    x = Dense(64, activation='tanh')(x)
+    x = Dropout(0.3)(x)
+    x = Dense(64, activation='tanh')(x)
+    x = Dropout(0.3)(x)
+    x = Dense(32, activation='tanh')(x)
+    x = Dropout(0.3)(x)
+    x = Dense(16, activation='tanh')(x)
     x = Dropout(0.2)(x)
-    x = Dense(64, activation='relu')(x)
-    x = Dropout(0.2)(x)
-    x = Dense(32, activation='relu')(x)
-    x = Dropout(0.2)(x)
-    x = Dense(16, activation='relu')(x)
-    x = Dropout(0.2)(x)
-    x = Dense(16, activation='relu')(x)
+    x = Dense(16, activation='tanh')(x)
     x = Dropout(0.2)(x)
     x = Dense(1)(x)
     out = Activation('sigmoid')(x)
     model = Model([fe_model.input, lstm.input], [out])
     print(model.summary())
-    '''model.add(Dense(128, activation='relu'))
-    model.add(Dropout(0.3))
-    model.add(Dense(64, activation='relu'))
-    model.add(Dropout(0.2))
-
-    model.add(Dense(32, activation='relu'))
-    # model.add(Dropout(0.2))
-    model.add(Dense(16, activation='relu'))
-    # model.add(Dropout(0.2))
-    # model.add(Dense(1, activation='sigmoid'))'''
 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])  # Compile the model
     # print(model.summary())  # Summarize the model
     es = EarlyStopping(monitor='val_acc', patience=100)
-    history = model.fit([x_t_f, a], y_train, epochs=400,  verbose=1, validation_data=([x_v_f, b],  y_val), batch_size=a.shape[0], callbacks=[es])  # Fit the model
+    history = model.fit([x_t_f, a], y_train, epochs=80,  verbose=1, validation_data=([x_v_f, b],  y_val), batch_size=a.shape[0], callbacks=[es])  # Fit the model
+    evaluate_model(model, history, x_t_f, a, y_train, 'train')
+    evaluate_model(model, history, x_v_f, b, y_val, 'validation')
+    evaluate_model(model, history, x_test, c, y_test, 'test')
+    y_pred = model.predict([x_t_f, a])
+    y_pred = transform_predictions(y_pred)
+    evaluate_sen_spec(y_train, y_pred, 'train')
+    y_pred = model.predict([x_v_f, b])
+    y_pred = transform_predictions(y_pred)
+    evaluate_sen_spec(y_val, y_pred, 'validation')
+    y_pred = model.predict([x_test, c])
+    y_pred = transform_predictions(y_pred)
+    evaluate_sen_spec(y_test, y_pred, 'test')
+
     # history = model.fit(padded_texts, y, batch_size=padded_texts.shape[0], epochs=3000, verbose=1, callbacks=[es])  # Fit the model
     # loss, accuracy = model.evaluate(a, y_train, verbose=0)  # Evaluate the model
     # print('Train set accuracy: %0.3f' % accuracy)
     # loss, accuracy = model.evaluate(b, y_val, verbose=0)
     # print('Validation set accuracy: %0.3f' % accuracy)
-    plot_history(history)
+    # plot_history(history)
 
 
 def feature_layer():
@@ -233,11 +262,43 @@ Evaluates accuracy of the model
 """
 
 
-def evaluate_model(model, history, x_train, y_train):
+def evaluate_model(model, history, x_train_features, x_train_lstm, y_train, set):
     # evaluate the model
-    scores = model.evaluate(x_train, y_train)
-    print("{0:<35s} {1:6.3f}%".format('Accuracy on train set:', scores[1] * 100))
-    print("{0:<35s} {1:6.3f}%".format('Accuracy on validation set:', float(history.history['val_acc'][-1]) * 100))
+    scores = model.evaluate([x_train_features, x_train_lstm], y_train)
+    print("{0:<35s} {1:6.3f}%".format('Accuracy on ' + set + ' set:', scores[1] * 100))
+
+"""
+Evaluates sensitivity and specificity
+on given dataset
+"""
+
+
+def evaluate_sen_spec(y_true, y_pred, set):
+    # gets number of true negatives (tn), false positives (fp),
+    # false negatives (fn) and true positives (tp)
+    # by matching the predicted labels against the correct ones
+    tn, fp, fn, tp = confusion_matrix(y_true, y_pred).ravel()
+
+    specificity = tn / (tn + fp)
+    sensitivity = tp / (tp + fn)
+    print("{0:<35s} {1:6.3f}%".format('Specificity on ' + set + ' set:', specificity))
+    print("{0:<35s} {1:6.3f}%".format('Sensitivity on ' + set + ' set:', sensitivity))
+
+
+"""
+Scales each prediction > 0.5 to 1 
+and <= 0.5 to 0 to get binary values
+"""
+
+
+def transform_predictions(y_pred):
+    for i, v in enumerate(y_pred):
+        if v > 0.5:
+            y_pred[i] = 1
+        else:
+            y_pred[i] = 0
+
+    return y_pred
 
 
 def plot_history(history):
