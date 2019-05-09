@@ -113,7 +113,9 @@ def train_model(x_train, y_train, x_val, y_val, x_test, y_test):
     # when the chosen value (validation set accuracy) reaches its peak and starts decreasing
     es = EarlyStopping(monitor='val_acc', patience=14)
     history = model.fit(x_train, y_train, epochs=100, callbacks=[es], validation_data=(x_val, y_val))
-    evaluate_model(model, history, x_train, y_train, x_test, y_test)
+    evaluate_model(model, x_train, y_train, 'train')
+    evaluate_model(model, x_val, y_val, 'validation')
+    evaluate_model(model, x_test, y_test, 'test')
     y_pred = model.predict(x_train)
     y_pred = transform_predictions(y_pred)
     evaluate_sen_spec(y_train, y_pred, 'train')
@@ -123,7 +125,7 @@ def train_model(x_train, y_train, x_val, y_val, x_test, y_test):
     y_pred = model.predict(x_test)
     y_pred = transform_predictions(y_pred)
     evaluate_sen_spec(y_test, y_pred, 'test')
-    # plot_history(history)
+    plot_history(history)
 
 
 """
@@ -164,14 +166,11 @@ Evaluates accuracy of the model
 """
 
 
-def evaluate_model(model, history, x_train, y_train, x_test, y_test):
+def evaluate_model(model, x, y, set):
     # evaluate the model
-    scores = model.evaluate(x_train, y_train)
-    print("{0:<35s} {1:6.3f}%".format('Accuracy on train set:', scores[1] * 100))
-    print("{0:<35s} {1:6.3f}%".format('Accuracy on validation set:', float(history.history['val_acc'][-1]) * 100))
-
-    scores = model.evaluate(x_test, y_test)
-    print("{0:<35s} {1:6.3f}%".format('Accuracy on test set:', scores[1] * 100))
+    scores = model.evaluate(x, y)
+    print("{0:<35s} {1:6.3f}%".format('Accuracy on ' + set + ' set:', scores[1] * 100))
+    print("{0:<35s} {1:6.3f}%".format('Loss on ' + set + ' set:', scores[0] * 100))
 
 
 """
@@ -187,7 +186,7 @@ def plot_history(history):
     plt.title('model accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'val'], loc='upper left')
     plt.show()
     # summarize history for loss
     plt.plot(history.history['loss'])
@@ -195,7 +194,7 @@ def plot_history(history):
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'val'], loc='upper left')
     plt.show()
 
 

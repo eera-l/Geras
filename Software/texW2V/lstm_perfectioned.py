@@ -209,7 +209,7 @@ def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])  # Compile the model
     # print(model.summary())  # Summarize the model
     es = EarlyStopping(monitor='val_acc', patience=100)
-    history = model.fit([x_t_f, a], y_train, epochs=80,  verbose=1, validation_data=([x_v_f, b],  y_val), batch_size=a.shape[0], callbacks=[es])  # Fit the model
+    history = model.fit([x_t_f, a], y_train, epochs=52,  verbose=1, validation_data=([x_v_f, b],  y_val), batch_size=a.shape[0], callbacks=[es])  # Fit the model
     evaluate_model(model, history, x_t_f, a, y_train, 'train')
     evaluate_model(model, history, x_v_f, b, y_val, 'validation')
     evaluate_model(model, history, x_test, c, y_test, 'test')
@@ -228,7 +228,7 @@ def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, 
     # print('Train set accuracy: %0.3f' % accuracy)
     # loss, accuracy = model.evaluate(b, y_val, verbose=0)
     # print('Validation set accuracy: %0.3f' % accuracy)
-    # plot_history(history)
+    plot_history(history)
 
 
 def feature_layer():
@@ -307,7 +307,7 @@ def plot_history(history):
     plt.title('model loss')
     plt.ylabel('loss')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'val'], loc='upper left')
     plt.show()
     # summarize history for accuracy
     plt.plot(history.history['acc'])
@@ -315,7 +315,7 @@ def plot_history(history):
     plt.title('model accuracy')
     plt.ylabel('accuracy')
     plt.xlabel('epoch')
-    plt.legend(['train', 'test'], loc='upper left')
+    plt.legend(['train', 'val'], loc='upper left')
     plt.show()
     # summarize history for loss
 
