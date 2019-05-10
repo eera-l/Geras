@@ -18,6 +18,7 @@ from sklearn.preprocessing import StandardScaler
 from load_glove_embeddings import load_glove_embeddings
 import pickle
 import matplotlib.pyplot as plt
+import time
 
 """
 Reads data from .csv file
@@ -25,7 +26,6 @@ Reads data from .csv file
 
 
 def read_csv():
-
     # reads data and stores it into dataframe
     df = pd.read_csv('train_set_lstm', sep=',')
     df_2 = pd.read_csv('train_set', sep=',')
@@ -63,47 +63,50 @@ def split_dataframe(dataframes):
 
 def embed(x_lstm, df, y, x_fe, x_test, x_test_lstm, y_test):
     max_len = 197
-    # word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
-    #
-    # out_matrix = []
-    #
-    # for text in x_lstm['text'].tolist():
-    #     indices = []
-    #     for w in text_to_word_sequence(text):
-    #         indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
-    #     if len(indices) > max_len:
-    #         max_len = len(indices)
-    #     out_matrix.append(indices)
-    #
-    # encoded_texts = out_matrix
+
+    #for train and validation set
+    word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
+
+    out_matrix = []
+
+    for text in x_lstm['text'].tolist():
+        indices = []
+        for w in text_to_word_sequence(text):
+            indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
+        if len(indices) > max_len:
+            max_len = len(indices)
+        out_matrix.append(indices)
+
+    encoded_texts = out_matrix
     # print(max_len)
-    #
-    # padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
 
-    # word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
-    #
-    # out_matrix = []
-    #
-    # for text in x_test_lstm['text'].tolist():
-    #     indices = []
-    #     for w in text_to_word_sequence(text):
-    #         if w == 'scotfree':
-    #             continue
-    #         indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
-    #     if len(indices) > max_len:
-    #         max_len = len(indices)
-    #     out_matrix.append(indices)
-    #
-    # encoded_texts = out_matrix
-    #
-    # padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
-    # store_data(padded_texts, 'embedded_text_test')
-    # embedding_matrix_test = load_data('embedded_text_test')
+    padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
 
-    # store_data(padded_texts, 'embedded_text')
-    padded_texts = load_data('embedded_text')
-    # store_data(embedding_matrix, 'embedded_matrix')
+    store_data(padded_texts, 'embedded_text')
+    store_data(embedding_matrix, 'embedded_matrix')
+
+
+    # for test set
+    word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
+
+    out_matrix = []
+
+    for text in x_test_lstm['text'].tolist():
+        indices = []
+        for w in text_to_word_sequence(text):
+            if w == 'scotfree':
+                continue
+            indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
+        if len(indices) > max_len:
+            max_len = len(indices)
+        out_matrix.append(indices)
+
+    encoded_texts = out_matrix
+    padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
+    store_data(padded_texts, 'embedded_text_test')
+
     embedding_matrix = load_data('embedded_matrix')
+    padded_texts = load_data('embedded_text')
     embedding_matrix_test = load_data('embedded_text_test')
     for idx, el in enumerate(padded_texts):
         dataframes[0]['text'][idx] = el
