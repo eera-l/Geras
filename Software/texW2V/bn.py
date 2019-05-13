@@ -76,6 +76,7 @@ def do_kfold_validation(x, y, x_test, y_test):
 
     evaluate_accuracy(model, x_train, x_val, x_test, y_train, y_val, y_test)
     # plot_correlation(x)
+    plot_frequency(x)
 
 
 """
@@ -144,6 +145,12 @@ def plot_correlation(x):
     fig.colorbar(cax)
     plt.xticks(range(len(labels)), labels, rotation='vertical')
     plt.yticks(range(len(labels)), labels)
+    plt.show()
+
+
+def plot_frequency(x):
+    plt.hist(x['hesitations'])
+    plt.gca().set(title='Frequency Histogram', ylabel='Frequency')
     plt.show()
 
 
