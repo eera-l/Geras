@@ -6,6 +6,7 @@ Reads features and test from input files, splits dataset into data and labels,
 trains and evaluates model.
 """
 import re
+import sys
 
 import pandas as pd
 import numpy as np
@@ -359,4 +360,4 @@ def plot_history(history):
 
 
 dataframes = read_csv()
-split_dataframe(dataframes, False)
+split_dataframe(dataframes, sys.argv[0] == 'True')
