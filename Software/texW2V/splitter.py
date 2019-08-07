@@ -9,7 +9,7 @@ pathDementia = '/home/federica/Documents/Thesis/Programs/TextParser/dementia/dem
 filesC = []
 filesD = []
 rows = []
-split_rate = 0.9
+split_rate = 0.8
 
 for r, d, f in os.walk(pathControl):
     for file in f:
@@ -46,7 +46,7 @@ df = pd.DataFrame(np.array(rows), columns=['utterances', 'predicates', 'sentence
                                            'retracing_reform', 'type_token_ratio', 'adverbs_ratio',
                                            'adjectives_ratio', 'idea_density', 'w2v_distance', 'age', 'dementia'])
 
-df.to_csv('train_set_90', index=False)
+df.to_csv('train_set', index=False)
 
 
 rows.clear()
@@ -76,5 +76,5 @@ df = pd.DataFrame(np.array(rows), columns=['utterances', 'predicates', 'sentence
                                            'pauses', 'trailing_offs', 'overlaps', 'repetitions', 'retracing_correction',
                                            'retracing_reform', 'type_token_ratio', 'adverbs_ratio',
                                            'adjectives_ratio', 'idea_density', 'w2v_distance', 'age', 'dementia'])
-df.to_csv('test_set_90', index=False)
+df.to_csv('test_set', index=False)
 
