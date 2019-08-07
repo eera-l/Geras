@@ -2,6 +2,8 @@
 lstm.py
 author: Federica Comuni
 Implements an LSTM. Optionally performs embedding of the text input.
+Reads features and test from input files, splits dataset into data and labels,
+trains and evaluates model.
 """
 import re
 
@@ -23,12 +25,13 @@ from load_embeddings import load_embeddings
 import pickle
 import matplotlib.pyplot as plt
 
-"""
-Reads data from .csv file
-"""
-
 
 def read_csv():
+    """
+    Reads data from .csv file
+    :return: 4 dataframes: training features, training text,
+    test features, test text
+    """
     # reads data and stores it into dataframe
     df = pd.read_csv('train_set_lstm', sep=',')
     df_2 = pd.read_csv('train_set', sep=',')
@@ -39,14 +42,16 @@ def read_csv():
     return dataframes
 
 
-"""
-Splits dataframe into x (containing the data)
-and y (containing the respective labels)
-"""
-
-
-def split_dataframe(dataframes, embed):
-
+def split_dataframe(dataframes, needs_embed):
+    """
+    Splits dataframes into x (containing the data)
+    and y (containing the respective labels)
+    :param dataframes: 4 dataframes read by read_csv()
+    :param needs_embed: boolean if you want to embed the text
+    -> text should be embedded if the project does not include "embedded_matrix",
+    "embedded_text" and "embedded_text_test" files.
+    To embed, "wiki-news-300d-1M.vec" should be included in the project
+    """
     # takes only dementia column (which are the labels, Y for dementia and N for control)
     # and converts to numbers: 1 for Y and 0 for N
     y = dataframes[0]['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
@@ -61,13 +66,26 @@ def split_dataframe(dataframes, embed):
 
     x_test_lstm = dataframes[3].drop(columns=['dementia'])
 
-    embed(x_lstm, dataframes, y, x_fe, x_test, x_test_lstm, y_test, embed)
+    embed(x_lstm, y, x_fe, x_test, x_test_lstm, y_test, needs_embed)
 
 
-def embed(x_lstm, df, y, x_fe, x_test, x_test_lstm, y_test, embed):
+def embed(x_lstm, y, x_fe, x_test, x_test_lstm, y_test, needs_embed):
+    """
+    Embeds the text in the training and test set using the wiki-news pre-trained vectors.
+    :param x_lstm: training set text
+    :param y: training set labels
+    :param x_fe: training set features
+    :param x_test: test set features
+    :param x_test_lstm: test set text
+    :param y_test: test set labels
+    :param needs_embed: boolean if you want to embed the text
+    -> text should be embedded if the project does not include "embedded_matrix",
+    "embedded_text" and "embedded_text_test" files.
+    To embed, "wiki-news-300d-1M.vec" should be included in the project
+    """
     max_len = 197
 
-    if embed:
+    if needs_embed:
         #for train and validation set
         word2index, embedding_matrix = load_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
 
@@ -82,7 +100,6 @@ def embed(x_lstm, df, y, x_fe, x_test, x_test_lstm, y_test, embed):
             out_matrix.append(indices)
 
         encoded_texts = out_matrix
-        # print(max_len)
 
         padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
 
@@ -98,6 +115,8 @@ def embed(x_lstm, df, y, x_fe, x_test, x_test_lstm, y_test, embed):
         for text in x_test_lstm['text'].tolist():
             indices = []
             for w in text_to_word_sequence(text):
+                # Scotfree is present in the data, but it is not in wiki-news and
+                # throws error
                 if w == 'scotfree':
                     continue
                 indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
@@ -118,10 +137,15 @@ def embed(x_lstm, df, y, x_fe, x_test, x_test_lstm, y_test, embed):
     for idx, el in enumerate(embedding_matrix_test):
         dataframes[3]['text'][idx] = el
     x_test_lstm = dataframes[3]['text']
-    do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len, x_test, x_test_lstm, y_test)
+    do_kfold_validation(x_fe, y, embedding_matrix, padded_texts, max_len, x_test, x_test_lstm, y_test)
 
 
 def store_data(padded_texts, file_name):
+    """
+    Stores embedded text into pickle for faster future loading
+    :param padded_texts: embedded text
+    :param file_name: filename to save file
+    """
     pickle_file = open(file_name, 'ab')
 
     pickle.dump(padded_texts, pickle_file)
@@ -129,18 +153,30 @@ def store_data(padded_texts, file_name):
 
 
 def load_data(file_name):
+    """
+    Loads pickle file
+    :param file_name: name of the file to load
+    :return: Embedded text read from the pickle file
+    """
     pickle_file = open(file_name, 'rb')
     padded_texts = pickle.load(pickle_file)
 
     pickle_file.close()
     return padded_texts
 
-"""
-Perform kfold cross validation to avoid overfitting
-"""
 
-
-def do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len, x_test, x_test_lstm, y_test):
+def do_kfold_validation(x_fe, y, embedding_matrix, padded_texts, max_len, x_test, x_test_lstm, y_test):
+    """
+    Perform kfold cross validation to avoid overfitting
+    :param x_fe: training set features
+    :param y: training set labels
+    :param embedding_matrix: embedded text matrix
+    :param padded_texts: embedded text
+    :param max_len: length of longest sentence
+    :param x_test: test set features
+    :param x_test_lstm: test set text
+    :param y_test: test set labels
+    """
     # initializes kfold with 5 folds, including shuffling,
     # using 7 as seed for the shuffling
     kfold = KFold(n_splits=5, random_state=9, shuffle=True)
@@ -157,14 +193,16 @@ def do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len
     x_val_features = scaler.transform(x_val_features)
     x_test = scaler.fit_transform(x_test)
 
-
-    train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val_train, y_val, padded_texts, y, x_train_features, x_val_features,
+    train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val_train, y_val, x_train_features, x_val_features,
                 x_test, x_test_lstm, y_test)
 
 
-def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, padded_texts, y, x_t_f, x_v_f,
+def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, x_t_f, x_v_f,
                 x_test, x_test_lstm, y_test):
-
+    """
+    Creates and trains full architecture including fully-connected
+    model and LSTM model
+    """
 
     x_df = x_train_lstm.values
     y_df = x_val.values
@@ -202,9 +240,9 @@ def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])  # Compile the model
     es = EarlyStopping(monitor='val_acc', patience=100)
     history = model.fit([x_t_f, a], y_train, epochs=52,  verbose=1, validation_data=([x_v_f, b],  y_val), batch_size=a.shape[0], callbacks=[es])  # Fit the model
-    evaluate_model(model, history, x_t_f, a, y_train, 'train')
-    evaluate_model(model, history, x_v_f, b, y_val, 'validation')
-    evaluate_model(model, history, x_test, c, y_test, 'test')
+    evaluate_model(model, x_t_f, a, y_train, 'train')
+    evaluate_model(model, x_v_f, b, y_val, 'validation')
+    evaluate_model(model, x_test, c, y_test, 'test')
     y_pred = model.predict([x_t_f, a])
     y_pred = transform_predictions(y_pred)
     evaluate_sen_spec(y_train, y_pred, 'train')
@@ -219,6 +257,10 @@ def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, 
 
 
 def feature_layer():
+    """
+    Creates a fully-connected layer for features
+    :return: Dense model
+    """
     fe_model = Sequential()
     # input layer: 24 neurons just like the number of features
     fe_model.add(Dense(24, input_dim=24))
@@ -226,6 +268,12 @@ def feature_layer():
 
 
 def lstm_model(embedding_matrix, max_len):
+    """
+    Defines and returns the LSTM architecture for text
+    :param embedding_matrix: matrix of embedded text
+    :param max_len: max length of sentence
+    :return: LSTM model
+    """
     model = Sequential()
 
     model.add(Embedding(input_dim=embedding_matrix.shape[0],
@@ -239,23 +287,28 @@ def lstm_model(embedding_matrix, max_len):
     return model
 
 
-"""
-Evaluates accuracy of the model
-"""
-
-
-def evaluate_model(model, history, x_train_features, x_train_lstm, y_train, set):
+def evaluate_model(model, x_train_features, x_train_lstm, y_train, set):
+    """
+    Evaluates accuracy of the model
+    :param model: trained model
+    :param x_train_features: training set features
+    :param x_train_lstm: training set text
+    :param y_train: training set labels
+    :param set: name of the evaluated set
+    """
     # evaluate the model
     scores = model.evaluate([x_train_features, x_train_lstm], y_train)
     print("{0:<35s} {1:6.2f}%".format('Accuracy on ' + set + ' set:', scores[1] * 100))
 
-"""
-Evaluates sensitivity and specificity
-on given dataset
-"""
-
 
 def evaluate_sen_spec(y_true, y_pred, set):
+    """
+    Evaluates sensitivity and specificity
+    on given dataset
+    :param y_true: correct labels
+    :param y_pred: predicted labels
+    :param set: name of the evaluated dataset
+    """
     # gets number of true negatives (tn), false positives (fp),
     # false negatives (fn) and true positives (tp)
     # by matching the predicted labels against the correct ones
@@ -267,13 +320,13 @@ def evaluate_sen_spec(y_true, y_pred, set):
     print("{0:<35s} {1:6.2f}%".format('Sensitivity on ' + set + ' set:', sensitivity * 100))
 
 
-"""
-Scales each prediction > 0.5 to 1 
-and <= 0.5 to 0 to get binary values
-"""
-
-
 def transform_predictions(y_pred):
+    """
+    Scales each prediction > 0.5 to 1
+    and <= 0.5 to 0 to get binary values
+    :param y_pred:
+    :return: scaled predictions
+    """
     for i, v in enumerate(y_pred):
         if v > 0.5:
             y_pred[i] = 1
@@ -284,6 +337,9 @@ def transform_predictions(y_pred):
 
 
 def plot_history(history):
+    """
+    Plots training history
+    """
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
     plt.title('model loss')

@@ -10,7 +10,7 @@ import numpy as np
 def load_embeddings(fp, embedding_dim, include_empty_char=True):
     """
     Loads pre-trained word embeddings (wiki-news-300d embeddings)
-        Inputs: - fp: filepath of pre-trained glove embeddings
+        Inputs: - fp: filepath of pre-trained wiki-news embeddings
                 - embedding_dim: dimension of each vector embedding
                 - generate_matrix: whether to generate an embedding matrix
         Outputs:
