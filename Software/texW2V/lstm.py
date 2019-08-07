@@ -137,7 +137,7 @@ def embed(x_lstm, y, x_fe, x_test, x_test_lstm, y_test, needs_embed):
     for idx, el in enumerate(embedding_matrix_test):
         dataframes[3]['text'][idx] = el
     x_test_lstm = dataframes[3]['text']
-    do_kfold_validation(x_fe, y, embedding_matrix, padded_texts, max_len, x_test, x_test_lstm, y_test)
+    do_kfold_validation(x_fe, y, embedding_matrix, max_len, x_test, x_test_lstm, y_test)
 
 
 def store_data(padded_texts, file_name):
@@ -165,7 +165,7 @@ def load_data(file_name):
     return padded_texts
 
 
-def do_kfold_validation(x_fe, y, embedding_matrix, padded_texts, max_len, x_test, x_test_lstm, y_test):
+def do_kfold_validation(x_fe, y, embedding_matrix, max_len, x_test, x_test_lstm, y_test):
     """
     Perform kfold cross validation to avoid overfitting
     :param x_fe: training set features
