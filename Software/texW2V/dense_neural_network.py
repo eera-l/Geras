@@ -1,5 +1,5 @@
 """
-ann.py
+dense_neural_network.py
 author: Federica Comuni
 Implements a 4-layer artificial neural network using Keras
 reads raw data from train_set.csv and converts it to a dataframe
@@ -157,8 +157,8 @@ def evaluate_sen_spec(y_true, y_pred, set):
 
     specificity = tn / (tn + fp)
     sensitivity = tp / (tp + fn)
-    print("{0:<35s} {1:6.3f}%".format('Specificity on ' + set + ' set:', specificity))
-    print("{0:<35s} {1:6.3f}%".format('Sensitivity on ' + set + ' set:', sensitivity))
+    print("{0:<35s} {1:6.2f}%".format('Specificity on ' + set + ' set:', specificity * 100))
+    print("{0:<35s} {1:6.2f}%".format('Sensitivity on ' + set + ' set:', sensitivity * 100))
 
 
 """
@@ -169,8 +169,8 @@ Evaluates accuracy of the model
 def evaluate_model(model, x, y, set):
     # evaluate the model
     scores = model.evaluate(x, y)
-    print("{0:<35s} {1:6.3f}%".format('Accuracy on ' + set + ' set:', scores[1] * 100))
-    print("{0:<35s} {1:6.3f}%".format('Loss on ' + set + ' set:', scores[0] * 100))
+    print("{0:<35s} {1:6.2f}%".format('Accuracy on ' + set + ' set:', scores[1] * 100))
+    print("{0:<35s} {1:6.2f}%".format('Loss on ' + set + ' set:', scores[0] * 100))
 
 
 """

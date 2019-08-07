@@ -1,5 +1,5 @@
 """
-bn.py
+bayesian_network.py
 author: Federica Comuni
 Implements a Bayesian Network with Gaussian Naive Bayes classifier
 reads raw data from train_set.csv and converts it to a dataframe
@@ -128,8 +128,8 @@ def evaluate_sen_spec(y_true, y_pred, set):
 
     specificity = tn / (tn + fp)
     sensitivity = tp / (tp + fn)
-    print("{0:<35s} {1:6.3f}%".format('Specificity on ' + set + ' set:', specificity))
-    print("{0:<35s} {1:6.3f}%".format('Sensitivity on ' + set + ' set:', sensitivity))
+    print("{0:<35s} {1:6.2f}%".format('Specificity on ' + set + ' set:', specificity * 100))
+    print("{0:<35s} {1:6.2f}%".format('Sensitivity on ' + set + ' set:', sensitivity * 100))
 
 
 """
