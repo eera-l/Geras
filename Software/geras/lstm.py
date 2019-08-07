@@ -360,4 +360,7 @@ def plot_history(history):
 
 
 dataframes = read_csv()
-split_dataframe(dataframes, sys.argv[0] == 'True')
+if len(sys.argv) > 1:
+    split_dataframe(dataframes, sys.argv[1].lower() in "--embed")
+else:
+    split_dataframe(dataframes, False)
