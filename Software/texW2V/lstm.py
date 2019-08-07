@@ -1,24 +1,27 @@
+"""
+lstm.py
+author: Federica Comuni
+Implements an LSTM. Optionally performs embedding of the text input.
+"""
 import re
 
 import pandas as pd
 import numpy as np
-from keras import Input, Model
+from keras import Model
 from keras.callbacks import EarlyStopping
-from keras_preprocessing.text import Tokenizer, text_to_word_sequence, one_hot
+from keras_preprocessing.text import text_to_word_sequence
 from keras_preprocessing.sequence import pad_sequences
-import keras
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import KFold
 from keras.models import Sequential
-from keras.layers import Dense, Embedding, LSTM, Flatten, Dropout, Bidirectional, Concatenate, concatenate, \
-    BatchNormalization, PReLU, Activation
+from keras.layers import Dense, LSTM, Dropout, Bidirectional, concatenate, \
+    BatchNormalization, Activation
 from keras.layers.embeddings import Embedding
 from sklearn.preprocessing import StandardScaler
 
-from load_glove_embeddings import load_glove_embeddings
+from load_embeddings import load_embeddings
 import pickle
 import matplotlib.pyplot as plt
-import time
 
 """
 Reads data from .csv file
@@ -42,7 +45,7 @@ and y (containing the respective labels)
 """
 
 
-def split_dataframe(dataframes):
+def split_dataframe(dataframes, embed):
 
     # takes only dementia column (which are the labels, Y for dementia and N for control)
     # and converts to numbers: 1 for Y and 0 for N
@@ -58,52 +61,53 @@ def split_dataframe(dataframes):
 
     x_test_lstm = dataframes[3].drop(columns=['dementia'])
 
-    embed(x_lstm, dataframes, y, x_fe, x_test, x_test_lstm, y_test)
+    embed(x_lstm, dataframes, y, x_fe, x_test, x_test_lstm, y_test, embed)
 
 
-def embed(x_lstm, df, y, x_fe, x_test, x_test_lstm, y_test):
+def embed(x_lstm, df, y, x_fe, x_test, x_test_lstm, y_test, embed):
     max_len = 197
 
-    #for train and validation set
-    word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
+    if embed:
+        #for train and validation set
+        word2index, embedding_matrix = load_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
 
-    out_matrix = []
+        out_matrix = []
 
-    for text in x_lstm['text'].tolist():
-        indices = []
-        for w in text_to_word_sequence(text):
-            indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
-        if len(indices) > max_len:
-            max_len = len(indices)
-        out_matrix.append(indices)
+        for text in x_lstm['text'].tolist():
+            indices = []
+            for w in text_to_word_sequence(text):
+                indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
+            if len(indices) > max_len:
+                max_len = len(indices)
+            out_matrix.append(indices)
 
-    encoded_texts = out_matrix
-    # print(max_len)
+        encoded_texts = out_matrix
+        # print(max_len)
 
-    padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
+        padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
 
-    store_data(padded_texts, 'embedded_text')
-    store_data(embedding_matrix, 'embedded_matrix')
+        store_data(padded_texts, 'embedded_text')
+        store_data(embedding_matrix, 'embedded_matrix')
 
 
-    # for test set
-    word2index, embedding_matrix = load_glove_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
+        # for test set
+        word2index, embedding_matrix = load_embeddings('wiki-news-300d-1M.vec', embedding_dim=300)
 
-    out_matrix = []
+        out_matrix = []
 
-    for text in x_test_lstm['text'].tolist():
-        indices = []
-        for w in text_to_word_sequence(text):
-            if w == 'scotfree':
-                continue
-            indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
-        if len(indices) > max_len:
-            max_len = len(indices)
-        out_matrix.append(indices)
+        for text in x_test_lstm['text'].tolist():
+            indices = []
+            for w in text_to_word_sequence(text):
+                if w == 'scotfree':
+                    continue
+                indices.append(word2index[re.sub(r'[^\w\s]', '', w)])
+            if len(indices) > max_len:
+                max_len = len(indices)
+            out_matrix.append(indices)
 
-    encoded_texts = out_matrix
-    padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
-    store_data(padded_texts, 'embedded_text_test')
+        encoded_texts = out_matrix
+        padded_texts = pad_sequences(encoded_texts, maxlen=max_len, padding='post')
+        store_data(padded_texts, 'embedded_text_test')
 
     embedding_matrix = load_data('embedded_matrix')
     padded_texts = load_data('embedded_text')
@@ -161,24 +165,12 @@ def do_kfold_validation(x_lstm, x_fe, y, embedding_matrix, padded_texts, max_len
 def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, padded_texts, y, x_t_f, x_v_f,
                 x_test, x_test_lstm, y_test):
 
-    # for idx, el in enumerate(x_train):
-    #     if el == 'text':
-    #         x_train.pop(0)
-    #     a = el
-    #     a = np.reshape(a, (70, 1))
-    #     x_train[idx] = a
-
-    # x_train.pop(0)
-
 
     x_df = x_train_lstm.values
     y_df = x_val.values
     x_df_test = x_test_lstm.values
-
-    # a = np.zeros([353, 70])
     a = np.vstack(x_df)
 
-    # b = np.zeros([88, 70])
     b = np.vstack(y_df)
 
     c = np.vstack(x_df_test)
@@ -186,8 +178,6 @@ def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, 
     fe_model = feature_layer()
     lstm = lstm_model(embedding_matrix, max_len)
     merged_layers = concatenate([fe_model.output, lstm.output])
-    # model.add(Concatenate([fe_model, lstm]))
-    # model.add(Dense(1,activation='sigmoid'))
 
     x = Dense(84, activation='tanh')(merged_layers)
     x = Dropout(0.5)(x)
@@ -210,7 +200,6 @@ def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, 
     print(model.summary())
 
     model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['acc'])  # Compile the model
-    # print(model.summary())  # Summarize the model
     es = EarlyStopping(monitor='val_acc', patience=100)
     history = model.fit([x_t_f, a], y_train, epochs=52,  verbose=1, validation_data=([x_v_f, b],  y_val), batch_size=a.shape[0], callbacks=[es])  # Fit the model
     evaluate_model(model, history, x_t_f, a, y_train, 'train')
@@ -226,29 +215,19 @@ def train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val, y_val, 
     y_pred = transform_predictions(y_pred)
     evaluate_sen_spec(y_test, y_pred, 'test')
 
-    # history = model.fit(padded_texts, y, batch_size=padded_texts.shape[0], epochs=3000, verbose=1, callbacks=[es])  # Fit the model
-    # loss, accuracy = model.evaluate(a, y_train, verbose=0)  # Evaluate the model
-    # print('Train set accuracy: %0.3f' % accuracy)
-    # loss, accuracy = model.evaluate(b, y_val, verbose=0)
-    # print('Validation set accuracy: %0.3f' % accuracy)
     plot_history(history)
 
 
 def feature_layer():
     fe_model = Sequential()
-    # input layer: 22 neurons just like the number of features
+    # input layer: 24 neurons just like the number of features
     fe_model.add(Dense(24, input_dim=24))
     return fe_model
 
 
 def lstm_model(embedding_matrix, max_len):
     model = Sequential()
-    # embedding_layer = Embedding(input_dim=embedding_matrix.shape[0],
-    #                             output_dim=embedding_matrix.shape[1],
-    #                             input_length=max_len,
-    #                             weights=[embedding_matrix],
-    #                             trainable=False,
-    #                             name='embedding_layer')
+
     model.add(Embedding(input_dim=embedding_matrix.shape[0],
                         output_dim=embedding_matrix.shape[1],
                         input_length=max_len,
@@ -268,7 +247,7 @@ Evaluates accuracy of the model
 def evaluate_model(model, history, x_train_features, x_train_lstm, y_train, set):
     # evaluate the model
     scores = model.evaluate([x_train_features, x_train_lstm], y_train)
-    print("{0:<35s} {1:6.3f}%".format('Accuracy on ' + set + ' set:', scores[1] * 100))
+    print("{0:<35s} {1:6.2f}%".format('Accuracy on ' + set + ' set:', scores[1] * 100))
 
 """
 Evaluates sensitivity and specificity
@@ -284,8 +263,8 @@ def evaluate_sen_spec(y_true, y_pred, set):
 
     specificity = tn / (tn + fp)
     sensitivity = tp / (tp + fn)
-    print("{0:<35s} {1:6.3f}%".format('Specificity on ' + set + ' set:', specificity))
-    print("{0:<35s} {1:6.3f}%".format('Sensitivity on ' + set + ' set:', sensitivity))
+    print("{0:<35s} {1:6.2f}%".format('Specificity on ' + set + ' set:', specificity * 100))
+    print("{0:<35s} {1:6.2f}%".format('Sensitivity on ' + set + ' set:', sensitivity * 100))
 
 
 """
@@ -324,5 +303,4 @@ def plot_history(history):
 
 
 dataframes = read_csv()
-split_dataframe(dataframes)
-# do_kfold_validation()
+split_dataframe(dataframes, False)

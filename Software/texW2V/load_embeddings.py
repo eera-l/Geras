@@ -1,5 +1,5 @@
 """
-From: https://gist.github.com/jovianlin/0a6b7c58cde7a502a68914ba001c77bf
+Adapted from: https://gist.github.com/jovianlin/0a6b7c58cde7a502a68914ba001c77bf
 """
 
 # coding: utf-8
@@ -7,9 +7,9 @@ From: https://gist.github.com/jovianlin/0a6b7c58cde7a502a68914ba001c77bf
 import numpy as np
 
 
-def load_glove_embeddings(fp, embedding_dim, include_empty_char=True):
+def load_embeddings(fp, embedding_dim, include_empty_char=True):
     """
-    Loads pre-trained word embeddings (GloVe embeddings)
+    Loads pre-trained word embeddings (wiki-news-300d embeddings)
         Inputs: - fp: filepath of pre-trained glove embeddings
                 - embedding_dim: dimension of each vector embedding
                 - generate_matrix: whether to generate an embedding matrix
@@ -31,7 +31,7 @@ def load_glove_embeddings(fp, embedding_dim, include_empty_char=True):
                 if word not in word2index:
                     word2index[word] = len(word2index)
             except Exception as e:
-                print('Exception occurred in `load_glove_embeddings`:', e)
+                print('Exception occurred in `load_embeddings`:', e)
                 continue
         # End of for loop.
     # End of with open

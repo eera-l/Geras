@@ -17,28 +17,22 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-"""
-Reads data from .csv file
-"""
-
-
 def read_csv():
-
+    """
+    Reads data from .csv file
+    """
     # reads data and stores it into dataframe
     df = pd.read_csv('train_set', sep=',')
     df_test = pd.read_csv('test_set', sep=',')
     split_dataframe(df, df_test)
 
 
-
-"""
-Splits dataframe into x (containing the data)
-and y (containing the respective labels)
-"""
-
-
 def split_dataframe(df, df_test):
-
+    """
+    Splits dataframe into data and labels
+    :param df: train set dataframe
+    :param df_test: test set dataframe
+    """
     # takes only dementia column (which are the labels, Y for dementia and N for control)
     # and converts to numbers: 1 for Y and 0 for N
     y = df['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
@@ -54,12 +48,14 @@ def split_dataframe(df, df_test):
     do_kfold_validation(x, y, x_test, y_test)
 
 
-"""
-Perform kfold cross validation to avoid overfitting
-"""
-
-
 def do_kfold_validation(x, y, x_test, y_test):
+    """
+    Perform kfold cross validation to avoid overfitting
+    :param x: training set data
+    :param y: training set labels
+    :param x_test: test set data
+    :param y_test: test set labels
+    """
     # initializes kfold with 5 folds, including shuffling,
     # using 9 as seed for the shuffling
     kfold = KFold(n_splits=5, random_state=9, shuffle=True)
@@ -76,16 +72,20 @@ def do_kfold_validation(x, y, x_test, y_test):
 
     evaluate_accuracy(model, x_train, x_val, x_test, y_train, y_val, y_test)
     # plot_correlation(x)
-    plot_frequency(x)
-
-
-"""
-Evaluates accuracy on train set
-and validation set
-"""
+    # plot_frequency(x, 'hesitations')
 
 
 def evaluate_accuracy(model, x_train, x_val, x_test, y_train, y_val, y_test):
+    """
+    Evaluates accuracy on all sets
+    :param model: model
+    :param x_train: training set data
+    :param x_val: validation set data
+    :param x_test: test set data
+    :param y_train: training set labels
+    :param y_val: validation set labels
+    :param y_test: test set labels
+    """
     # evaluation on train set
     score = model.score(x_train, y_train)
     print("{0:<35s} {1:6.3f}%".format('Accuracy on train set:', score * 100))
@@ -114,13 +114,14 @@ def evaluate_accuracy(model, x_train, x_val, x_test, y_train, y_val, y_test):
     evaluate_sen_spec(y_test, y_pred, 'test')
 
 
-"""
-Evaluates sensitivity and specificity
-on given dataset
-"""
-
-
 def evaluate_sen_spec(y_true, y_pred, set):
+    """
+    Evaluates sensitivity and specificity
+    on given dataset
+    :param y_true: set of correct labels
+    :param y_pred: set of predicted labels
+    :param set: name of the evaluated set
+    """
     # gets number of true negatives (tn), false positives (fp),
     # false negatives (fn) and true positives (tp)
     # by matching the predicted labels against the correct ones
@@ -132,12 +133,11 @@ def evaluate_sen_spec(y_true, y_pred, set):
     print("{0:<35s} {1:6.2f}%".format('Sensitivity on ' + set + ' set:', sensitivity * 100))
 
 
-"""
-plots graph of correlation between features using matplotlib
-"""
-
-
 def plot_correlation(x):
+    """
+    Plots graph of correlation between features
+    :param x: training set dataframe
+    """
     labels = x.columns.values
     fig = plt.figure(num='Features correlation')
     ax = fig.add_subplot(111)
@@ -148,8 +148,13 @@ def plot_correlation(x):
     plt.show()
 
 
-def plot_frequency(x):
-    plt.hist(x['hesitations'])
+def plot_frequency(x, feature):
+    """
+    Plots histogram of frequency of chosen feature
+    :param x: training set dataframe
+    :param feature: chosen feature
+    """
+    plt.hist(x[feature])
     plt.gca().set(title='Frequency Histogram', ylabel='Frequency')
     plt.show()
 

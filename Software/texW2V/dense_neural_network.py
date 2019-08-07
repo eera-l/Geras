@@ -20,27 +20,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-"""
-Reads data and stores it into dataframe df
-"""
-
-
 def read_data():
+    """
+    Reads data and stores it into dataframe df
+    """
     df = pd.read_csv('train_set', sep=',')
     df_test = pd.read_csv('test_set', sep=',')
     np.random.seed(21)
     split_dataframe(df, df_test)
 
 
-
-"""
-Splits dataframe into dataframe x, containing data for all features
-and y, containing corresponding label (healthy or dementia)
-"""
-
-
 def split_dataframe(df, df_test):
-
+    """
+    Splits dataframes into dataframe x, containing data for all features
+    and y, containing corresponding label (healthy or dementia)
+    :param df: training dataframe
+    :param df_test: test dataframe
+    """
     # takes only dementia column (which are the labels, Y for dementia and N for control)
     # and converts to numbers: 1 for Y and 0 for N
     y = df['dementia'].apply(lambda x : 1 if x == 'Y' else 0)
@@ -55,12 +51,14 @@ def split_dataframe(df, df_test):
     do_kfold_validation(x, y, x_test, y_test)
 
 
-"""
-Perform kfold cross validation to avoid overfitting
-"""
-
-
 def do_kfold_validation(x, y, x_test, y_test):
+    """
+    Performs kfold cross validation to avoid overfitting
+    :param x: training set data
+    :param y: training set labels
+    :param x_test: test set data
+    :param y_test: test set labels
+    """
     # initializes kfold with 5 folds, including shuffling,
     # using 9 as seed for the shuffling
     kfold = KFold(n_splits=5, random_state=9, shuffle=True)
@@ -72,13 +70,17 @@ def do_kfold_validation(x, y, x_test, y_test):
         normalize(x_train, y_train, x_val, y_val, x_test, y_test)
 
 
-"""
-Normalizes datasets to ensure that all features
-have mean = 0 and standard deviation = 1
-"""
-
-
 def normalize(x_train, y_train, x_val, y_val, x_test, y_test):
+    """
+    Normalizes datasets to ensure that all features
+    have mean = 0 and standard deviation = 1
+    :param x_train: training set data
+    :param y_train: training set labels
+    :param x_val: validation set data
+    :param y_val: validation set labels
+    :param x_test: test set data
+    :param y_test: test set labels
+    """
     scaler = StandardScaler()
     x_train = scaler.fit_transform(x_train)
     x_val = scaler.fit_transform(x_val)
@@ -86,12 +88,10 @@ def normalize(x_train, y_train, x_val, y_val, x_test, y_test):
     train_model(x_train, y_train, x_val, y_val, x_test, y_test)
 
 
-"""
-Creates a 4-layer neural network and trains it
-"""
-
-
 def train_model(x_train, y_train, x_val, y_val, x_test, y_test):
+    """
+    Creates a 4-layer neural network and trains it
+    """
     # create model
     model = Sequential()
     # input layer: 22 neurons just like the number of features
@@ -128,13 +128,13 @@ def train_model(x_train, y_train, x_val, y_val, x_test, y_test):
     plot_history(history)
 
 
-"""
-Scales each prediction > 0.5 to 1 
-and <= 0.5 to 0 to get binary values
-"""
-
-
 def transform_predictions(y_pred):
+    """
+    Scales each prediction > 0.5 to 1
+    and <= 0.5 to 0 to get binary values
+    :param y_pred: predictions
+    :return: scaled predictions
+    """
     for i, v in enumerate(y_pred):
         if v > 0.5:
             y_pred[i] = 1
@@ -143,13 +143,15 @@ def transform_predictions(y_pred):
 
     return y_pred
 
-"""
-Evaluates sensitivity and specificity
-on given dataset
-"""
-
 
 def evaluate_sen_spec(y_true, y_pred, set):
+    """
+    Evaluates sensitivity and specificity
+    on given dataset
+    :param y_true: correct labels
+    :param y_pred: predicted labels
+    :param set: name of the dataset
+    """
     # gets number of true negatives (tn), false positives (fp),
     # false negatives (fn) and true positives (tp)
     # by matching the predicted labels against the correct ones
@@ -161,25 +163,24 @@ def evaluate_sen_spec(y_true, y_pred, set):
     print("{0:<35s} {1:6.2f}%".format('Sensitivity on ' + set + ' set:', sensitivity * 100))
 
 
-"""
-Evaluates accuracy of the model
-"""
-
-
 def evaluate_model(model, x, y, set):
+    """
+    Evaluates accuracy of the model
+    :param model: trained model
+    :param x: data
+    :param y: labels
+    :param set: name of the dataset
+    """
     # evaluate the model
     scores = model.evaluate(x, y)
     print("{0:<35s} {1:6.2f}%".format('Accuracy on ' + set + ' set:', scores[1] * 100))
     print("{0:<35s} {1:6.2f}%".format('Loss on ' + set + ' set:', scores[0] * 100))
 
 
-"""
-Plots history of accuracy and loss during epochs
-"""
-
-
 def plot_history(history):
-
+    """
+    Plots history of accuracy and loss during epochs
+    """
     # summarize history for accuracy
     plt.plot(history.history['acc'])
     plt.plot(history.history['val_acc'])

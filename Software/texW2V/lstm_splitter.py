@@ -21,7 +21,7 @@ def read_directory(files, path):
 def read_files(files, control, train):
     global lines, rows_control, rows_dementia
     lines = []
-    split_rate = 0.9
+    split_rate = 0.8
     if train:
         start_index = 0
         end_index = int(split_rate * len(files))
@@ -64,8 +64,8 @@ read_directory(filesC, pathControl)
 read_directory(filesD, pathDementia)
 read_files(filesC, True, True)
 read_files(filesD, False, True)
-write_to_file('train_set_lstm_90')
+write_to_file('train_set_lstm')
 read_files(filesC, True, False)
 read_files(filesD, False, False)
-write_to_file('test_set_lstm_90')
+write_to_file('test_set_lstm')
 
