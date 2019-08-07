@@ -7,7 +7,7 @@ The Bayesian Network and the Dense Network classify using only features.
 The LSTM classifies using both features and embedded text.
 
 To embed the text, download the pre-trained Wiki News 300d vectors from https://fasttext.cc/docs/en/english-vectors.html, unzip it and add it to the project folder.
-Run `lstm.py` with `split_dataframe(dataframes, True)` on line 362. The embedded matrix will be saved to file; all further tests can be run without embedding the text (with `split_dataframe(dataframes, False)`).
+Run `lstm.py --embed`. The embedded matrix will be saved to file; all further tests can be run without embedding the text (with `lstm.py`).
 
 ### Extracted features:
  * Age
