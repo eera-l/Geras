@@ -39,7 +39,7 @@ Run `lstm.py --embed`. The embedded matrix will be saved to file; all further te
 ## Performance
 The algorithms perform with the following accuracy on the test set:
 
-| Model | Accuracy | Precision | Recall |
+| Model | Accuracy | Specificity | Sensitivity |
 |-------|----------|-----------|--------|
 | BN    | 72.1%    | 69.4%     | 74.2%  |
 | DNN   | 81.1%    | 75.5%     | 85.5%  |
