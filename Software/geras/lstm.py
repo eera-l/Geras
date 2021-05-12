@@ -189,10 +189,15 @@ def do_kfold_validation(x_fe, y, embedding_matrix, max_len, x_test, x_test_lstm,
         x_train_lstm, x_val_train = dataframes[0]['text'].loc[train_index], dataframes[0]['text'].loc[val_index]
         y_train, y_val = y.loc[train_index], y.loc[val_index]
         x_train_features, x_val_features = x_fe.loc[train_index], x_fe.loc[val_index]
-
+    
+    # Incorrect
     x_train_features = scaler.fit_transform(x_train_features)
     x_val_features = scaler.transform(x_val_features)
     x_test = scaler.fit_transform(x_test)
+    # Correct version
+    x_train_features = scaler.fit_transform(x_train_features)
+    x_val_features = scaler.transform(x_val_features)
+    x_test = scaler.transform(x_test)
 
     train_model(x_train_lstm, y_train, embedding_matrix, max_len, x_val_train, y_val, x_train_features, x_val_features,
                 x_test, x_test_lstm, y_test)
