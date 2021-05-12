@@ -82,9 +82,14 @@ def normalize(x_train, y_train, x_val, y_val, x_test, y_test):
     :param y_test: test set labels
     """
     scaler = StandardScaler()
+    # Incorrect version
     x_train = scaler.fit_transform(x_train)
     x_val = scaler.fit_transform(x_val)
     x_test = scaler.fit_transform(x_test)
+    # Correct version
+    x_train = scaler.fit_transform(x_train)
+    x_val = scaler.transform(x_val)
+    x_test = scaler.transform(x_test)
     train_model(x_train, y_train, x_val, y_val, x_test, y_test)
 
 
